@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars and fill in. Do not commit terraform.tfvars.
+
+environment       = "stage2"
+litellm_image_tag = ""   # REQUIRED: a specific -stable tag, e.g. "v1.89.x-stable"
+
+gateway_key_vault_name    = "kv-aigw-stage2-eus2"   # must be globally unique
+breakglass_key_vault_name = "kv-aigw-bg-eus2"       # must be globally unique
+
+# Foundry account resource id, once the pilot deployment exists:
+foundry_scope_id = ""
+
+teams_webhook_url = ""   # REQUIRED: Teams incoming webhook for alerts

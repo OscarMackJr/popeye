@@ -1,0 +1,15 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Local env
+.env
+config/litellm.azure.yaml
+config/litellm.aws.yaml
+
+# OS/editor
+.DS_Store
