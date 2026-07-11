@@ -1,17 +1,17 @@
-# gateway-azure configuration. Copy to litellm.azure.yaml, fill in the
-# pilot deployments, and ship via the mechanism chosen in the Stage 2
-# ADR (config-baked internal image preferred; see the TODO in
-# modules/gateway-service-azure/main.tf). Do not commit the filled copy.
+# gateway-azure configuration reference. The managed Stage 2 deployment
+# renders the same non-secret routing fields from Terraform variables
+# and delivers the YAML as a Container Apps secret (ADR-002). Do not put
+# provider API keys in this file or in Terraform variables.
 
 model_list:
   # Azure pilot track, primary for this region.
   - model_name: twg-foundry
     litellm_params:
-      model: azure/your-foundry-deployment-name   # replace with pilot deployment
-      api_base: os.environ/AZURE_API_BASE
+      model: azure/your-foundry-deployment-name
+      api_base: https://your-foundry-account.openai.azure.com/
       # Preferred: managed-identity auth (role assigned in the service
       # module). API key via Key Vault only as fallback.
-      api_version: os.environ/AZURE_API_VERSION
+      api_version: "2024-10-21"
 
   # Cross-cloud fallback target. Configure ONLY for model groups the
   # application owners have marked cross-cloud-safe (roadmap 4.4/5).

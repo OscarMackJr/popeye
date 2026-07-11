@@ -9,4 +9,11 @@ breakglass_key_vault_name = "kv-aigw-bg-eus2"       # must be globally unique
 # Foundry account resource id, once the pilot deployment exists:
 foundry_scope_id = ""
 
+# Non-secret Foundry routing details rendered into the LiteLLM config
+# delivered as a Container Apps secret. Provider auth stays managed
+# identity/RBAC; do not put API keys here.
+foundry_deployment_name = "your-foundry-deployment-name"
+foundry_api_base        = "https://your-foundry-account.openai.azure.com/"
+foundry_api_version     = "2024-10-21"
+
 teams_webhook_url = ""   # REQUIRED: Teams incoming webhook for alerts

@@ -11,6 +11,28 @@ locals {
     managed_by  = "terraform"
     spec        = "AI_USAGE_GOVERNANCE_ROADMAP_v0.2"
   })
+  litellm_config_yaml = <<-EOT
+model_list:
+  - model_name: twg-foundry
+    litellm_params:
+      model: azure/${var.foundry_deployment_name}
+      api_base: ${var.foundry_api_base}
+      api_version: ${var.foundry_api_version}
+
+router_settings:
+  num_retries: 2
+  timeout: 120
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT
+  redis_password: os.environ/REDIS_PASSWORD
+
+litellm_settings:
+  store_prompts_in_spend_logs: false
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+EOT
 }
 
 data "azurerm_client_config" "current" {}
@@ -207,6 +229,7 @@ module "service" {
   redis_ssl_port             = module.state.redis_ssl_port
   redis_primary_access_key   = module.state.redis_primary_access_key
   foundry_scope_id           = var.foundry_scope_id
+  litellm_config_yaml        = local.litellm_config_yaml
   tags                       = local.tags
 }
 

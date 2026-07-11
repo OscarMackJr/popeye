@@ -50,6 +50,35 @@ variable "foundry_scope_id" {
   type        = string
   default     = ""
 }
+variable "foundry_deployment_name" {
+  description = "Azure Foundry / Azure OpenAI deployment name exposed through LiteLLM as twg-foundry."
+  type        = string
+
+  validation {
+    condition     = length(trimspace(var.foundry_deployment_name)) > 0
+    error_message = "Set the selected Foundry deployment name for the twg-foundry LiteLLM backend."
+  }
+}
+
+variable "foundry_api_base" {
+  description = "Base URL for the selected Foundry / Azure OpenAI endpoint, for example https://account.openai.azure.com/."
+  type        = string
+
+  validation {
+    condition     = can(regex("^https://", var.foundry_api_base))
+    error_message = "Foundry API base must be an HTTPS URL."
+  }
+}
+
+variable "foundry_api_version" {
+  description = "Azure OpenAI API version used by LiteLLM for the selected Foundry deployment."
+  type        = string
+
+  validation {
+    condition     = length(trimspace(var.foundry_api_version)) > 0
+    error_message = "Set the Azure OpenAI API version for the twg-foundry LiteLLM backend."
+  }
+}
 
 variable "teams_webhook_url" {
   description = "Teams incoming webhook for the notify action group."

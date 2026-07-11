@@ -160,12 +160,9 @@ resource "azurerm_container_app" "gateway" {
         secret_name = "litellm-config"
       }
 
-      # TODO(stage-2): mount config/litellm.azure.yaml. Options:
-      # (a) bake the config into an internally built image layered on
-      #     the pinned upstream tag (preferred: config changes become
-      #     image releases with the same pin/rollback discipline), or
-      # (b) Azure Files volume mount on the Container App environment.
-      # Decide in the Stage 2 ADR alongside OSS-vs-Enterprise.
+      # ADR-002: deploy the non-secret LiteLLM routing config as a
+      # Container Apps secret and write it to disk at process startup.
+      # Provider credentials stay in managed identity / Key Vault paths.
     }
   }
 

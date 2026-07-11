@@ -9,7 +9,7 @@ Primary post-read action: resume the next engineering task with the correct cont
 
 ## Current Position
 
-The project is in the Stage 1/Stage 2 POC phase of the AI usage governance control plane. Azure eastus2 infrastructure is live; the remaining MVP work is to wire the selected Foundry backend, prove attributed traffic through the gateway, complete Stage 1 measurements, and fold the integration-roadmap requirements into operational readiness.
+The project is in the Stage 1/Stage 2 POC phase of the AI usage governance control plane. Azure eastus2 infrastructure is live and the selected Foundry backend config has been delivered; the remaining MVP work is to prove attributed traffic through the gateway, complete Stage 1 measurements, and fold the integration-roadmap requirements into operational readiness.
 
 Working sources of truth:
 
@@ -24,7 +24,7 @@ The Stage 1 POC artifacts (Cube model, POC compose profile) live in the hometown
 ## Stage Progress
 
 - Stage 1 (Control-plane POC): ACTIVE / INTEGRATED WITH STAGE 2. Local POC artifacts are still needed for the measurement protocol and demo beats, but the Azure managed stack has also been applied. Exit still produces `specs/STAGE1_BASELINES.md`, which turns provisional SLOs into committed numbers.
-- Stage 2 (First managed region, azure-eastus2): APPLIED / RUNNING WITH MINIMAL BOOT CONFIG. Terraform remote state is in Azure Storage, resources are live in the TWG Architecture POCs subscription, and the Container App latest revision is healthy with two replicas. The gateway has a minimal LiteLLM config with no model backend yet; Foundry deployment wiring and a smoke completion are the next Stage 2 proof points.
+- Stage 2 (First managed region, azure-eastus2): APPLIED / FOUNDRY CONFIG DELIVERED. Terraform remote state is in Azure Storage, resources are live in the TWG Architecture POCs subscription, and the Container App latest revision is healthy with two replicas. The gateway now renders `twg-foundry` to the selected Foundry deployment via ADR-002 config delivery, and the gateway identity has Foundry RBAC. A smoke completion and ledger-row confirmation are the next Stage 2 proof points.
 - Stage 3 (Second region + reporting + fleet rollout): STUBBED. `envs/aws-use1` and `envs/reporting` are requirements stubs; PowerShell automation skeletons in `scripts/` still need Graph implementation.
 - Stage 4 (FinOps operationalization): NOT STARTED.
 
@@ -33,7 +33,7 @@ The Stage 1 POC artifacts (Cube model, POC compose profile) live in the hometown
 Terraform (Azure, Stage 2):
 
 - `modules/gateway-state-azure`: zone-redundant Postgres Flexible Server (keys, budgets, regional ledger; `prevent_destroy`) and Azure Managed Redis. Azure Cache for Redis creation was blocked by retirement policy, so new deployments use Managed Redis.
-- `modules/gateway-service-azure`: Container Apps gateway, pinned LiteLLM image, min 2 replicas, user-assigned identity, Key Vault secret references, Managed Redis secret wiring, minimal boot config, optional Foundry RBAC assignment.
+- `modules/gateway-service-azure`: Container Apps gateway, pinned LiteLLM image, min 2 replicas, user-assigned identity, Key Vault secret references, Managed Redis secret wiring, ADR-002 LiteLLM config secret delivery, and optional Foundry RBAC assignment.
 - `modules/gateway-observability-azure`: Log Analytics, App Insights, Postgres diagnostics, Teams action group, availability alert skeleton (thresholds deferred to Stage 1 baselines by design).
 - `modules/breakglass-azure`: dormant vault, approvers-only data plane, audited, placeholder secret with ignored drift so Terraform never reverts an active credential mid-incident.
 - `envs/azure-eastus2`: root module wiring networking (VNet, delegated subnets, private DNS), the gateway secrets vault, generated secrets (master key, salt key with `prevent_destroy`, database URL), all four modules, and the configured AzureRM backend. Current outputs include the internal gateway FQDN and Postgres FQDN.
@@ -48,17 +48,16 @@ Non-Terraform:
 
 Continue the combined Stage 1/Stage 2 MVP:
 
-1. Fill the selected Foundry deployment details and replace the minimal LiteLLM boot config with the real `twg-foundry` backend configuration.
-2. Run a smoke completion through the internal gateway and confirm one attributed row lands in the regional ledger.
-3. Complete the Stage 1 measurement protocol: latency overhead, budget counter lag, ledger freshness, fallback behavior, ledger interruption, and budget-versus-provider-throttle payload capture.
-4. Hand hometown read access and request ID/attribution expectations for the `ai_token_usage` chargeback query; Popeye owns the grant and ledger path, not the Cube model.
-5. Evaluate gateway-level content guardrails/DLP on the hook surface: PII masking, prompt-injection screening, latency/error impact, and compatibility with the no-prompt-logging guardrail.
-6. Commit MVP SLO numbers into a roadmap v0.3 revision, replace placeholder alert criteria, and rehearse the six MVP runbooks.
+1. Run a smoke completion through the internal gateway and confirm one attributed row lands in the regional ledger. The current workstation cannot resolve the internal Container Apps FQDN, and `az containerapp exec` did not accept non-interactive smoke commands even though ARM reports both replicas running and ready.
+2. Use the smoke evidence to complete the Stage 1 measurement protocol: latency overhead, budget counter lag, ledger freshness, fallback behavior, ledger interruption, and budget-versus-provider-throttle payload capture.
+3. Hand hometown read access and request ID/attribution expectations for the `ai_token_usage` chargeback query; Popeye owns the grant and ledger path, not the Cube model.
+4. Evaluate gateway-level content guardrails/DLP on the hook surface: PII masking, prompt-injection screening, latency/error impact, and compatibility with the no-prompt-logging guardrail.
+5. Commit MVP SLO numbers into a roadmap v0.3 revision, replace placeholder alert criteria, and rehearse the six MVP runbooks.
 
 ## Known Gaps
 
 - Terraform has been initialized, validated, planned, and applied against the TWG Architecture POCs subscription. Final drift check reported no changes.
-- Gateway config delivery remains an MVP decision (ADR-002). Current implementation uses a Terraform-injected minimal boot config so LiteLLM starts; real Foundry-backed config delivery must be settled before production use.
+- Gateway config delivery is now ADR-002: Terraform renders non-secret LiteLLM YAML into a Container Apps secret. Revisit before production if config size, promotion workflow, or audit needs justify a baked image or mounted file.
 - The availability alert is a placeholder criterion; real burn-rate rules need the response-status dimension and Stage 1 thresholds.
 - Application-VNet peering and the `ai.twg.internal` private DNS zone ownership are TODOs in the env root.
 - Intune/Graph script bodies are skeletons; Stage 3 work.

@@ -33,6 +33,6 @@ Owned by this repository:
 To be added as ADRs when decided (roadmap section 11):
 
 - ADR-001: Gateway product (LiteLLM OSS vs. Enterprise vs. Azure APIM).
-- ADR-002: Gateway config delivery (config-baked image vs. mounted volume).
+- [ADR-002: Gateway config delivery](./ADR-002-gateway-config-delivery.md) - Terraform-rendered non-secret YAML delivered as a Container Apps secret.
 - ADR-003: Reporting store placement and consolidation mechanism.
 - ADR-004: Cross-cloud-safe model group list (with application owners).

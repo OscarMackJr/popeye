@@ -101,23 +101,6 @@ variable "tags" {
 }
 
 variable "litellm_config_yaml" {
-  description = "Minimal LiteLLM config mounted at container startup. Replace with populated config once Foundry deployment is selected."
+  description = "LiteLLM config delivered as a Container Apps secret. Must contain no provider API keys because this value is present in Terraform state."
   type        = string
-  default     = <<-EOT
-model_list: []
-
-router_settings:
-  num_retries: 2
-  timeout: 120
-  redis_host: os.environ/REDIS_HOST
-  redis_port: os.environ/REDIS_PORT
-  redis_password: os.environ/REDIS_PASSWORD
-
-litellm_settings:
-  store_prompts_in_spend_logs: false
-
-general_settings:
-  master_key: os.environ/LITELLM_MASTER_KEY
-  database_url: os.environ/DATABASE_URL
-EOT
 }
