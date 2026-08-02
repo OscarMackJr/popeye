@@ -50,7 +50,7 @@ MVP includes Stage 1 and Stage 2 together:
 - Budget enforcement with captured caller-visible budget errors that are distinguishable from provider throttling.
 - `ai_token_usage` read access for hometown and one chargeback/showback query over the pilot window.
 - One nono bypass-detection event or documented stand-in per the kickoff descope rules.
-- Baseline measurements for gateway latency overhead, budget counter lag, ledger freshness, fallback behavior, and ledger interruption.
+- Baseline measurements for gateway latency overhead, budget counter lag, ledger freshness, ledger interruption, and fallback behavior when a second backend is available. If the second backend is not available, the baseline document records fallback as skipped with the second-provider prerequisite.
 - MVP SLO numbers committed from those measurements, placeholder alert criteria replaced, and the six operational runbooks rehearsed.
 - Gateway-level content guardrail/DLP evaluation results recorded with a go/no-go recommendation for PII masking and prompt-injection screening in the managed request path.
 
@@ -68,16 +68,16 @@ MVP includes Stage 1 and Stage 2 together:
 
 Goal: prove enforcement, attribution, and semantic reporting end to end, locally, and produce the measured baselines that turn provisional SLOs into committed numbers.
 
-Status: awaiting kickoff assignments (five names, model pair, spend cap approval - kickoff doc sections 2-4).
+Status: awaiting kickoff assignments (five names, model pair, spend cap approval - kickoff doc sections 2-4). The current remediation explicitly permits a single-provider POC when the second backend is not available; fallback measurement is then skipped with the missing provider prerequisite recorded in `specs/STAGE1_BASELINES.md`.
 
 Tasks (kickoff doc governs execution detail):
 
 1. Deploy the pinned gateway image locally per the POC compose profile; enforce the USD 50 POC budget as a gateway budget on day 1.
-2. Configure Bedrock and Foundry backends behind one endpoint with one fallback chain.
+2. Configure the available Foundry backend behind the gateway. Add Bedrock and one fallback chain only when the Cloud access owner has procured the second backend; otherwise record the single-provider descope in the baseline document.
 3. Issue three virtual keys (two apps, one desktop user); route one hometown GraphRAG-style call and one desktop agent through the gateway with attribution.
 4. Demonstrate budget enforcement (429, budget error class, distinguishable from provider throttling - capture real payloads).
 5. Demonstrate one nono bypass detection (stand-in allowed per descope rules).
-6. Run the measurement protocol: latency overhead (paired-difference percentiles), budget counter lag under concurrency, ledger freshness, fallback behavior, ledger-interruption continuity plus reconciliation.
+6. Run the measurement protocol: latency overhead (paired-difference percentiles), budget counter lag under concurrency, ledger freshness, ledger-interruption continuity plus reconciliation, and fallback behavior only when a second backend is available.
 7. Hand hometown the ledger access for their `ai_token_usage` model and chargeback demo query (their Stage 1 extension; our task is the grant, not the model).
 8. Deliver `specs/STAGE1_BASELINES.md` (days 11-12) - the stage's real deliverable.
 

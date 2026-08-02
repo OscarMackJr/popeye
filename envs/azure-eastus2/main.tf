@@ -11,13 +11,16 @@ locals {
     managed_by  = "terraform"
     spec        = "AI_USAGE_GOVERNANCE_ROADMAP_v0.2"
   })
+  # Public model names rendered here must correspond to reviewed entries in
+  # config/model-approval-registry.example.yaml. Key allowlists are derived
+  # from that registry; this YAML remains provider routing config only.
   litellm_config_yaml = <<-EOT
 model_list:
   - model_name: twg-foundry
     litellm_params:
       model: azure/${var.foundry_deployment_name}
       api_base: ${var.foundry_api_base}
-      api_version: ${var.foundry_api_version}
+      api_version: "${var.foundry_api_version}"
 
 router_settings:
   num_retries: 2
@@ -28,6 +31,7 @@ router_settings:
 
 litellm_settings:
   store_prompts_in_spend_logs: false
+  enable_azure_ad_token_refresh: true
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
@@ -181,6 +185,12 @@ resource "azurerm_key_vault_secret" "database_url" {
   )
   depends_on = [azurerm_role_assignment.deployer_secrets_officer]
 }
+resource "azurerm_key_vault_secret" "redis_password" {
+  name         = "redis-password"
+  key_vault_id = azurerm_key_vault.gateway.id
+  value        = module.state.redis_primary_access_key
+  depends_on   = [azurerm_role_assignment.deployer_secrets_officer]
+}
 
 # --- Modules ---------------------------------------------------------
 
@@ -227,7 +237,7 @@ module "service" {
   database_url_secret_id     = azurerm_key_vault_secret.database_url.id
   redis_hostname             = module.state.redis_hostname
   redis_ssl_port             = module.state.redis_ssl_port
-  redis_primary_access_key   = module.state.redis_primary_access_key
+  redis_password_secret_id   = azurerm_key_vault_secret.redis_password.id
   foundry_scope_id           = var.foundry_scope_id
   litellm_config_yaml        = local.litellm_config_yaml
   tags                       = local.tags
@@ -247,5 +257,7 @@ module "breakglass" {
 
 # --- Internal DNS ----------------------------------------------------
 # gateway-azure.ai.twg.internal -> Container App internal FQDN.
-# TODO(stage-2): create/attach the ai.twg.internal private zone once
-# its ownership (this stack vs. central networking) is confirmed.
+# TODO(stage-2, decision due 2026-08-15): central networking either
+# owns and creates/delegates this record, or this stack gains the
+# private DNS zone variables/data sources needed to manage it here.
+

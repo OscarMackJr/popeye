@@ -2,9 +2,15 @@
 # renders the same non-secret routing fields from Terraform variables
 # and delivers the YAML as a Container Apps secret (ADR-002). Do not put
 # provider API keys in this file or in Terraform variables.
+#
+# Public model names and data-class approvals are governed by
+# config/model-approval-registry.example.yaml. Keep model_list entries in
+# sync with reviewed registry entries; virtual-key allowlists are derived
+# from the registry rather than hand-maintained.
 
 model_list:
-  # Azure pilot track, primary for this region.
+  # Azure pilot track, primary for this region. Public name is approved
+  # in the model approval registry as an Azure-specific model.
   - model_name: twg-foundry
     litellm_params:
       model: azure/your-foundry-deployment-name
@@ -28,12 +34,17 @@ router_settings:
   timeout: 120
   redis_host: os.environ/REDIS_HOST
   redis_port: os.environ/REDIS_PORT
+  # Azure Redis SSL ports require REDIS_SSL=true in the container environment.
 
 litellm_settings:
   # Guardrail (roadmap section 9): token counts and cost only; prompt
   # and completion bodies never land in the ledger. Leave false.
   store_prompts_in_spend_logs: false
+  # Azure managed identity auth: the Container App sets AZURE_CLIENT_ID
+  # for its user-assigned identity, and LiteLLM refreshes Azure AD tokens.
+  enable_azure_ad_token_refresh: true
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
+

@@ -77,10 +77,9 @@ resource "azurerm_container_app" "gateway" {
     }
   }
 
-  # Secrets arrive as Key Vault references resolved by the managed
-  # identity. Values never appear in Terraform state as literals here;
-  # they are created in the env root from random_password and stored
-  # in Key Vault first.
+  # Runtime credentials arrive as Key Vault references resolved by the
+  # managed identity. The LiteLLM config secret is routing metadata
+  # delivered as a Container Apps secret per ADR-002.
   secret {
     name                = "litellm-master-key"
     key_vault_secret_id = var.master_key_secret_id
@@ -100,8 +99,9 @@ resource "azurerm_container_app" "gateway" {
   }
 
   secret {
-    name  = "redis-password"
-    value = var.redis_primary_access_key
+    name                = "redis-password"
+    key_vault_secret_id = var.redis_password_secret_id
+    identity            = azurerm_user_assigned_identity.gateway.id
   }
 
   secret {
@@ -156,15 +156,56 @@ resource "azurerm_container_app" "gateway" {
       }
 
       env {
+        name  = "REDIS_SSL"
+        value = "true"
+      }
+
+      env {
         name        = "LITELLM_CONFIG"
         secret_name = "litellm-config"
+      }
+
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.gateway.client_id
       }
 
       # ADR-002: deploy the non-secret LiteLLM routing config as a
       # Container Apps secret and write it to disk at process startup.
       # Provider credentials stay in managed identity / Key Vault paths.
+
+      startup_probe {
+        transport               = "HTTP"
+        port                    = 4000
+        path                    = "/health/liveliness"
+        initial_delay           = 10
+        interval_seconds        = 10
+        timeout                 = 3
+        failure_count_threshold = 18
+      }
+
+      readiness_probe {
+        transport               = "HTTP"
+        port                    = 4000
+        path                    = "/health/liveliness"
+        interval_seconds        = 10
+        timeout                 = 3
+        failure_count_threshold = 3
+        success_count_threshold = 1
+      }
+
+      liveness_probe {
+        transport               = "HTTP"
+        port                    = 4000
+        path                    = "/health/liveliness"
+        initial_delay           = 60
+        interval_seconds        = 30
+        timeout                 = 3
+        failure_count_threshold = 3
+      }
     }
   }
 
   tags = var.tags
 }
+

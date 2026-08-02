@@ -1,0 +1,31 @@
+name: Terraform
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Format And Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive
+
+      - name: Initialize Azure eastus2 root without backend
+        run: terraform -chdir=envs/azure-eastus2 init -backend=false
+
+      - name: Validate Azure eastus2 root
+        run: terraform -chdir=envs/azure-eastus2 validate

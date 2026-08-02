@@ -8,7 +8,14 @@ Source-controlled specifications for the AI gateway control plane.
 - [AI Usage Governance Roadmap v0.2](./AI_USAGE_GOVERNANCE_ROADMAP_v0.2.md) — architecture, reliability model, SLOs, incident response, staged roadmap.
 - [Gateway Infrastructure And Implementation Plan v0.1](./GATEWAY_INFRASTRUCTURE_PLAN_v0.1.md) — language decisions, per-cloud resource inventories, repository layout, sequencing.
 - [Popeye Stage 1 Kickoff v0.1](./POPEYE_STAGE1_KICKOFF_v0.1.md) — POC execution direction: ownership, prerequisites, measurement protocol, demo script.
-- [Popeye Integration Roadmap](./ROADMAP_integration_popeye.md) — working scope/MVP boundary across Popeye, hometown, and program-level POCs.
+- [Popeye Roadmap](./ROADMAP.md) — working scope/MVP boundary across Popeye, hometown, and program-level POCs.
+- [Data-Class Enforcement v0.1](./DATA_CLASS_ENFORCEMENT_v0.1.md) — requirement draft for deriving model allowlists from regulated data classification.
+- [Data-Class Enforcement Implementation Spec v0.1](./DATA_CLASS_ENFORCEMENT_IMPLEMENTATION_SPEC_v0.1.md) — implementation-ready scope and acceptance criteria.
+- [Data-Class Enforcement Implementation Prompt v0.1](./DATA_CLASS_ENFORCEMENT_IMPLEMENTATION_PROMPT_v0.1.md) — phased execution prompt for implementation agents.
+- [Popeye Implementation Review v0.1](./POPEYE_IMPLEMENTATION_REVIEW_v0.1.md) - review findings to remediate before POC.
+- [Popeye Implementation Review Remediation Spec v0.1](./POPEYE_IMPLEMENTATION_REVIEW_REMEDIATION_SPEC_v0.1.md) - implementation-ready remediation plan for all review findings.
+- [Popeye Implementation Review Remediation Prompt v0.1](./POPEYE_IMPLEMENTATION_REVIEW_REMEDIATION_PROMPT_v0.1.md) - phased execution prompt for remediation agents.
+- [State Backend Access Confirmation v0.1](./STATE_BACKEND_ACCESS_CONFIRMATION_v0.1.md) - Terraform state sensitivity and access-control confirmation.
 
 ## Cross-Repository Artifacts
 

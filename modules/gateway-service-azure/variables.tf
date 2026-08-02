@@ -57,10 +57,10 @@ variable "redis_hostname" {
 variable "redis_ssl_port" {
   type = number
 }
-variable "redis_primary_access_key" {
-  description = "Primary Redis access key passed to LiteLLM as a Container Apps secret."
+
+variable "redis_password_secret_id" {
+  description = "Key Vault secret id for the Redis access key."
   type        = string
-  sensitive   = true
 }
 
 variable "foundry_scope_id" {
