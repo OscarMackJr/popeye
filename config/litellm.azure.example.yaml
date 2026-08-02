@@ -2,9 +2,15 @@
 # renders the same non-secret routing fields from Terraform variables
 # and delivers the YAML as a Container Apps secret (ADR-002). Do not put
 # provider API keys in this file or in Terraform variables.
+#
+# Public model names and data-class approvals are governed by
+# config/model-approval-registry.example.yaml. Keep model_list entries in
+# sync with reviewed registry entries; virtual-key allowlists are derived
+# from the registry rather than hand-maintained.
 
 model_list:
-  # Azure pilot track, primary for this region.
+  # Azure pilot track, primary for this region. Public name is approved
+  # in the model approval registry as an Azure-specific model.
   - model_name: twg-foundry
     litellm_params:
       model: azure/your-foundry-deployment-name

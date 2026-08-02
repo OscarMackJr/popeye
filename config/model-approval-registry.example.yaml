@@ -1,0 +1,31 @@
+# Source-controlled approval registry for data-class-derived model allowlists.
+# This file contains policy metadata only. Do not put provider credentials,
+# deployment keys, or LiteLLM master keys here.
+
+data_classes:
+  - public
+  - internal
+  - confidential
+  - regulated
+
+models:
+  - public_name: twg-foundry
+    cloud: azure
+    provider: foundry
+    deployment_var: foundry_deployment_name
+    approved_max_data_class: internal
+    owner: platform
+    rationale: "Stage 2 pilot Foundry deployment; synthetic/internal data only."
+  - public_name: twg-foundry-regulated
+    cloud: azure
+    provider: foundry
+    deployment_var: foundry_regulated_deployment_name
+    approved_max_data_class: regulated
+    owner: platform
+    rationale: "Example regulated approval used for allowlist derivation tests."
+
+teams:
+  - team_id: desktop-agents
+    default_data_class: internal
+  - team_id: regulated-apps
+    default_data_class: regulated

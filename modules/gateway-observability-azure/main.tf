@@ -56,16 +56,19 @@ resource "azurerm_monitor_action_group" "notify" {
   tags = var.tags
 }
 
-# --- Alerting baseline skeletons (roadmap 7.3) -----------------------
-# TODO(stage-2): replace placeholder criteria with measured-baseline
-# thresholds from the Stage 1 exit document. Skeleton kept minimal on
-# purpose: alert *classes* are architecture; thresholds are data.
+# --- Alerting baseline (roadmap 7.3) ---------------------------------
+# These page-level alerts are deliberately conservative POC guards that
+# can fire before Stage 1 produces burn-rate thresholds. Budget
+# threshold, spend-velocity, fallback-activation, nono-bypass, and
+# attribution-completeness alerts remain deferred until
+# specs/STAGE1_BASELINES.md supplies measured thresholds and data
+# sources.
 
-resource "azurerm_monitor_metric_alert" "gateway_availability" {
-  name                = "${var.name_prefix}-availability-burn"
+resource "azurerm_monitor_metric_alert" "gateway_failed_requests" {
+  name                = "${var.name_prefix}-gateway-5xx"
   resource_group_name = var.resource_group_name
   scopes              = [var.container_app_id]
-  description         = "PAGE: gateway availability SLO burn (roadmap 6). Threshold set from Stage 1 baselines."
+  description         = "PAGE: gateway returned 5xx responses. Conservative POC guard; burn-rate thresholds come from Stage 1 baselines."
   severity            = 1
   frequency           = "PT1M"
   window_size         = "PT5M"
@@ -75,9 +78,69 @@ resource "azurerm_monitor_metric_alert" "gateway_availability" {
     metric_name      = "Requests"
     aggregation      = "Total"
     operator         = "GreaterThan"
-    # Placeholder criterion: replace with 5xx-ratio burn-rate rule at
-    # Stage 2 (requires the response-status dimension).
-    threshold = 1000000
+    threshold        = 0
+
+    dimension {
+      name     = "statusCodeCategory"
+      operator = "Include"
+      values   = ["5xx"]
+    }
+  }
+
+  dynamic "action" {
+    for_each = var.teams_webhook_url == "" ? [] : [azurerm_monitor_action_group.notify[0].id]
+
+    content {
+      action_group_id = action.value
+    }
+  }
+
+  tags = var.tags
+}
+
+resource "azurerm_monitor_metric_alert" "gateway_replica_unavailable" {
+  name                = "${var.name_prefix}-gateway-replicas-low"
+  resource_group_name = var.resource_group_name
+  scopes              = [var.container_app_id]
+  description         = "PAGE: gateway active replicas below the minimum HA posture."
+  severity            = 1
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+
+  criteria {
+    metric_namespace = "Microsoft.App/containerApps"
+    metric_name      = "Replicas"
+    aggregation      = "Average"
+    operator         = "LessThan"
+    threshold        = 2
+  }
+
+  dynamic "action" {
+    for_each = var.teams_webhook_url == "" ? [] : [azurerm_monitor_action_group.notify[0].id]
+
+    content {
+      action_group_id = action.value
+    }
+  }
+
+  tags = var.tags
+}
+
+resource "azurerm_monitor_metric_alert" "postgres_availability" {
+  name                = "${var.name_prefix}-postgres-unavailable"
+  resource_group_name = var.resource_group_name
+  scopes              = [var.postgres_server_id]
+  description         = "PAGE: regional ledger Postgres availability metric reports unhealthy."
+  severity            = 1
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+
+  criteria {
+    metric_namespace = "Microsoft.DBforPostgreSQL/flexibleServers"
+    metric_name      = "is_db_alive"
+    aggregation      = "Average"
+    operator         = "LessThan"
+    threshold        = 1
   }
 
   dynamic "action" {

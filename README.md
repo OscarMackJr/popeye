@@ -17,7 +17,7 @@ Read in order:
 1. [STATE.md](./STATE.md) — where the project is and the next task.
 2. [specs/AI_USAGE_GOVERNANCE_ROADMAP_v0.2.md](./specs/AI_USAGE_GOVERNANCE_ROADMAP_v0.2.md) — the why and the reliability model.
 3. [specs/GATEWAY_INFRASTRUCTURE_PLAN_v0.1.md](./specs/GATEWAY_INFRASTRUCTURE_PLAN_v0.1.md) — the what and the how.
-4. [specs/ROADMAP_integration_popeye.md](./specs/ROADMAP_integration_popeye.md) — the working scope and MVP boundary.
+4. [specs/ROADMAP.md](./specs/ROADMAP.md) — the working scope and MVP boundary.
 
 ## Layout
 

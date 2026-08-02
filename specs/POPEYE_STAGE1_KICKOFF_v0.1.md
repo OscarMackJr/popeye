@@ -48,7 +48,7 @@ Baselines that cannot be reproduced are anecdotes. Protocol for each measurement
 - **Latency overhead**: 100 non-streaming completions with a fixed synthetic prompt (~200 tokens in, `max_tokens` 256) direct-to-provider, then the same 100 through the gateway to the same backend. Report p50/p95/p99 of the *difference distribution*, not of the two averages. Repeat once for streaming, reporting time-to-first-token deltas. Same for both backends.
 - **Budget counter lag**: set a key's budget so ~5 requests exhaust it; fire 20 concurrent requests; record how many succeed past the budget line and the wall-clock spread between the last over-budget success and the first 429. That count and spread are the measured overspend bound (roadmap 4.3).
 - **Ledger freshness**: timestamp request completion versus the row's queryability through Cube; 20 samples, report p95.
-- **Fallback behavior**: point the primary backend at an invalid endpoint mid-run; record error classes surfaced (per the roadmap 4.4 taxonomy), fallback activation, and recovery on restoring the endpoint. Capture the actual 429 response bodies for budget-versus-throttle so the taxonomy claim is verified with real payloads, not documentation.
+- **Fallback behavior**: when two backends are available, point the primary backend at an invalid endpoint mid-run; record error classes surfaced (per the roadmap 4.4 taxonomy), fallback activation, and recovery on restoring the endpoint. If the second backend is not available, mark this measurement skipped in `specs/STAGE1_BASELINES.md` with the missing second-provider prerequisite and owner. Capture the actual 429 response bodies for budget-versus-throttle so the taxonomy claim is verified with real payloads, not documentation.
 - **Ledger interruption**: stop the Postgres container for 60 seconds under a 1 req/s trickle; confirm requests continue; after restart, run the manual reconciliation (request count from gateway logs versus ledger rows) and record any loss.
 
 Environment note recorded once in the baseline doc: this is single-instance local Docker; numbers are floors and ceilings for intuition, and Stage 2's managed deployment re-verifies before SLOs are committed (roadmap section 6).
@@ -65,7 +65,7 @@ Two-week timebox, demo on day 10, days 11–12 for the baseline document. If blo
 
 - **Must hold** (the demo is these four): budget enforcement event; chargeback query through Cube; one measured latency baseline; attribution end to end (app + user visible in the query).
 - **May slip with a stand-in**: nono bypass detection. If the policy profile isn't demo-ready, an equivalent detection from nono's existing flow logging (or, worst case, Windows Firewall logging) demonstrates the *concept* with an honest caption; the productized policy moves to Stage 3 where it was already scheduled to mature.
-- **May slip entirely**: the second cloud backend. If Foundry or Bedrock access stalls past day 5, run the POC single-provider and say so; the gateway's multi-provider claim is demonstrated by configuration, not blocked on procurement.
+- **May slip entirely**: the second cloud backend. If Foundry or Bedrock access stalls past day 5, run the POC single-provider and say so in the demo and baseline document. In that case fallback measurement is skipped, not counted as demonstrated; the Cloud access owner carries the second-backend follow-up.
 - **Kill criterion**: if by day 5 no model endpoint is reachable at all, stop, escalate the access problem to the CTO as the finding, and reschedule. An access-blocked POC that limps produces bad baselines and a worse demo.
 
 ## 8. CTO Demo Script (Day 10, ~15 Minutes)
@@ -76,7 +76,7 @@ Build toward this from day 1; every task output is a beat in it:
 2. **Live**: a completion through the gateway; the attributed ledger row; the same spend appearing in a Cube `ai_token_usage` query by app, user, model, cloud.
 3. **Live**: the runaway-agent story — a low-budget key hits its cap, the 429 with the budget error class, visibly distinct from provider throttling.
 4. **Live or captured**: nono flags a direct-to-provider bypass from a workstation.
-5. **Captured**: fallback absorbing a dead backend.
+5. **Captured, if two backends are available**: fallback absorbing a dead backend. If single-provider, show the recorded descope and second-backend prerequisite instead.
 6. **One slide**: measured baselines table, and the ask — approve Stage 2 (first managed region, the scaffolded `envs/azure-eastus2`), the operational-owner decision (roadmap 8.4), and the break-glass approver names (roadmap section 11).
 
 The demo ends on the asks. The baselines make the SLO conversation concrete; the two open decisions (owner, approvers) are the ones only the CTO can close.
@@ -86,7 +86,7 @@ The demo ends on the asks. The baselines make the SLO conversation concrete; the
 `specs/STAGE1_BASELINES.md`, produced days 11–12, structure fixed now:
 
 - Header: dates, gateway image tag, model pair and list prices, environment note (section 5).
-- One section per measurement (latency, counter lag, freshness, fallback, ledger interruption): method reference, raw summary numbers, and the single sentence "therefore the provisional SLO of X is / is not achievable as written."
+- One section per measurement (latency, counter lag, freshness, fallback when available, ledger interruption): method reference, raw summary numbers or explicit skip reason, and the single sentence "therefore the provisional SLO of X is / is not achievable as written."
 - Closing: proposed committed SLO numbers for roadmap v0.3, and any taxonomy or behavior surprises with the captured payloads.
 
 This document is Stage 1's real deliverable. The demo persuades; the baselines commit.
