@@ -156,8 +156,18 @@ resource "azurerm_container_app" "gateway" {
       }
 
       env {
+        name  = "REDIS_SSL"
+        value = "true"
+      }
+
+      env {
         name        = "LITELLM_CONFIG"
         secret_name = "litellm-config"
+      }
+
+      env {
+        name  = "AZURE_CLIENT_ID"
+        value = azurerm_user_assigned_identity.gateway.client_id
       }
 
       # ADR-002: deploy the non-secret LiteLLM routing config as a
@@ -198,3 +208,4 @@ resource "azurerm_container_app" "gateway" {
 
   tags = var.tags
 }
+

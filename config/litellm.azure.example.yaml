@@ -34,12 +34,17 @@ router_settings:
   timeout: 120
   redis_host: os.environ/REDIS_HOST
   redis_port: os.environ/REDIS_PORT
+  # Azure Redis SSL ports require REDIS_SSL=true in the container environment.
 
 litellm_settings:
   # Guardrail (roadmap section 9): token counts and cost only; prompt
   # and completion bodies never land in the ledger. Leave false.
   store_prompts_in_spend_logs: false
+  # Azure managed identity auth: the Container App sets AZURE_CLIENT_ID
+  # for its user-assigned identity, and LiteLLM refreshes Azure AD tokens.
+  enable_azure_ad_token_refresh: true
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
+

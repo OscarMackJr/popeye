@@ -20,7 +20,7 @@ model_list:
     litellm_params:
       model: azure/${var.foundry_deployment_name}
       api_base: ${var.foundry_api_base}
-      api_version: ${var.foundry_api_version}
+      api_version: "${var.foundry_api_version}"
 
 router_settings:
   num_retries: 2
@@ -31,6 +31,7 @@ router_settings:
 
 litellm_settings:
   store_prompts_in_spend_logs: false
+  enable_azure_ad_token_refresh: true
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
@@ -259,3 +260,4 @@ module "breakglass" {
 # TODO(stage-2, decision due 2026-08-15): central networking either
 # owns and creates/delegates this record, or this stack gains the
 # private DNS zone variables/data sources needed to manage it here.
+
