@@ -25,7 +25,14 @@ param(
   [string] $PostgresFqdn = "pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com",
   [int] $Port = 5432,
   [string] $PsqlDsn,
-  [switch] $SkipVmMetadataCheck
+  [switch] $SkipVmMetadataCheck,
+  # Gateway FQDN comes from `az containerapp show` (properties.configuration.ingress.fqdn); never hardcoded.
+  [string] $GatewayFqdn,
+  [int] $GatewayPort = 443,
+  # Optional: the environment staticIp; the resolved A record must equal it.
+  [string] $ExpectedGatewayIp,
+  # Report only whether psql and az are on PATH (D-18 preflight).
+  [switch] $CheckTooling
 )
 
 Set-StrictMode -Version Latest
@@ -57,28 +64,69 @@ function Add-Result {
     })
 }
 
+function Test-NameAndPort {
+  param(
+    [Parameter(Mandatory)] [System.Collections.Generic.List[object]] $Results,
+    [Parameter(Mandatory)] [string] $Label,
+    [Parameter(Mandatory)] [string] $Name,
+    [Parameter(Mandatory)] [int] $Port,
+    [string] $ExpectedIp
+  )
+
+  try {
+    $resolution = @(Resolve-DnsName -Name $Name -Type A -ErrorAction Stop)
+    $addresses = @(
+      $resolution |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_.IPAddress) } |
+        ForEach-Object { [System.Net.IPAddress]::Parse($_.IPAddress) }
+    )
+    $privateAddresses = @($addresses | Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and (Test-Rfc1918Address $_) })
+    $passed = ($privateAddresses.Count -gt 0)
+    if (-not [string]::IsNullOrWhiteSpace($ExpectedIp)) {
+      $passed = $passed -and (@($addresses | Where-Object { $_.ToString() -eq $ExpectedIp }).Count -gt 0)
+    }
+    Add-Result -Results $Results -Check "NET-04 $Label resolves" -Passed $passed -Detail ("Resolved: " + (($addresses | ForEach-Object ToString) -join ", ") + $(if ($ExpectedIp) { "; expected: $ExpectedIp" } else { "" }))
+  }
+  catch {
+    Add-Result -Results $Results -Check "NET-04 $Label resolves" -Passed $false -Detail $_.Exception.Message
+  }
+
+  try {
+    $connection = Test-NetConnection -ComputerName $Name -Port $Port -WarningAction SilentlyContinue -InformationLevel Detailed
+    Add-Result -Results $Results -Check "NET-04 $Label TCP $Port" -Passed ([bool]$connection.TcpTestSucceeded) -Detail ("Remote address: {0}; TCP succeeded: {1}" -f $connection.RemoteAddress, $connection.TcpTestSucceeded)
+  }
+  catch {
+    Add-Result -Results $Results -Check "NET-04 $Label TCP $Port" -Passed $false -Detail $_.Exception.Message
+  }
+}
+
 $results = [System.Collections.Generic.List[object]]::new()
 
-try {
-  $resolution = @(Resolve-DnsName -Name $PostgresFqdn -Type A -ErrorAction Stop)
-  $addresses = @(
-    $resolution |
-      Where-Object { -not [string]::IsNullOrWhiteSpace($_.IPAddress) } |
-      ForEach-Object { [System.Net.IPAddress]::Parse($_.IPAddress) }
-  )
-  $privateAddresses = @($addresses | Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and (Test-Rfc1918Address $_) })
-  Add-Result -Results $results -Check "DNS resolves to RFC1918 address" -Passed ($privateAddresses.Count -gt 0) -Detail ("Resolved: " + (($addresses | ForEach-Object ToString) -join ", "))
-}
-catch {
-  Add-Result -Results $results -Check "DNS resolves to RFC1918 address" -Passed $false -Detail $_.Exception.Message
+if ($CheckTooling) {
+  # D-18 preflight: report only; non-secret.
+  foreach ($tool in @('psql', 'az')) {
+    $cmd = Get-Command $tool -ErrorAction SilentlyContinue
+    if ($null -eq $cmd) {
+      Add-Result -Results $results -Check "Tooling: $tool on PATH" -Passed $false -Detail "$tool not found on PATH."
+    }
+    else {
+      $version = "unknown"
+      try { $version = ((& $cmd.Source --version 2>&1 | Select-Object -First 1) | Out-String).Trim() } catch { $version = "version query failed" }
+      Add-Result -Results $results -Check "Tooling: $tool on PATH" -Passed $true -Detail $version
+    }
+  }
+  $results | Format-Table -AutoSize
+  if (@($results | Where-Object Status -eq "FAIL").Count -gt 0) { exit 1 }
+  exit 0
 }
 
-try {
-  $connection = Test-NetConnection -ComputerName $PostgresFqdn -Port $Port -WarningAction SilentlyContinue -InformationLevel Detailed
-  Add-Result -Results $results -Check "TCP $Port reachable" -Passed ([bool]$connection.TcpTestSucceeded) -Detail ("Remote address: {0}; TCP succeeded: {1}" -f $connection.RemoteAddress, $connection.TcpTestSucceeded)
+Test-NameAndPort -Results $results -Label "Postgres" -Name $PostgresFqdn -Port $Port
+
+if ($PSBoundParameters.ContainsKey("GatewayPort") -and [string]::IsNullOrWhiteSpace($GatewayFqdn)) {
+  throw "NET-04: -GatewayFqdn is required when -GatewayPort is used."
 }
-catch {
-  Add-Result -Results $results -Check "TCP $Port reachable" -Passed $false -Detail $_.Exception.Message
+if (-not [string]::IsNullOrWhiteSpace($GatewayFqdn)) {
+  Test-NameAndPort -Results $results -Label "Gateway" -Name $GatewayFqdn -Port $GatewayPort -ExpectedIp $ExpectedGatewayIp
 }
 
 if (-not $SkipVmMetadataCheck) {
