@@ -13,7 +13,7 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
 
 - [x] **NET-01**: The peering `vnet-popeye-stage1-stage2-eastus2` ↔ `EUS-POPEYE-VNET-01` is Connected/FullyInSync both ways and allows VNet access. Its ownership is recorded: either imported into or referenced by Popeye Terraform, or documented as networking-owned, so `terraform plan` stays clean.
 - [x] **NET-02**: The `privatelink.postgres.database.azure.com` zone is linked to both VNets, and Postgres public network access stays Disabled.
-- [x] **NET-03**: A private DNS zone for the Container Apps environment default domain (`*.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` and apex → 10.60.0.108) exists and is linked to both VNets, so the gateway's internal FQDN resolves from the caller VNet.
+- [ ] **NET-03**: A private DNS zone for the Container Apps environment default domain (`*.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` and apex → 10.60.0.108) exists and is linked to both VNets, so the gateway's internal FQDN resolves from the caller VNet.
 - [x] **NET-04**: An operator on `EUS-VM-POPEYE`, connected through `EUS-POPEY-BASTION`, gets:
   - an RFC1918 address when resolving the Postgres FQDN, and `TcpTestSucceeded: True` on 5432;
   - the gateway's internal FQDN resolving to 10.60.0.108, with 443 reachable.
@@ -195,7 +195,7 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
 |-------------|-------|--------|
 | NET-01 | Phase 1 | Complete |
 | NET-02 | Phase 1 | Complete |
-| NET-03 | Phase 1 | Complete |
+| NET-03 | Phase 1 | Pending (networking-owned zone; evidence in 01-09) |
 | NET-04 | Phase 1 | Complete |
 | NET-05 | Phase 1 | Complete |
 | NET-06 | Phase 1 | Complete |
