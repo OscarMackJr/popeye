@@ -1,7 +1,12 @@
 # Copy to terraform.tfvars and fill in. Do not commit terraform.tfvars.
 
 environment       = "stage2"
-litellm_image_tag = ""   # REQUIRED: a specific -stable tag, e.g. "v1.89.x-stable"
+# LiteLLM image tag: tags are plain vX.Y.Z (the -stable suffix no longer exists since 1.84.0).
+# The tag and digest are pinned in the committed file litellm-pin.auto.tfvars and must NOT be set here.
+# Never "latest"; never 1.91.0-1.100.3 (GHSA-7hp6-4w63-5g45).
+# litellm-pin.auto.tfvars is the one committed tfvars file, non-secret by contract
+# (image tag + digest only); any other key in it is a review failure.
+# litellm_image_tag = ""   # intentionally unset here so it cannot shadow the pin file
 
 gateway_key_vault_name    = "kv-aigw-stage2-eus2"   # must be globally unique
 breakglass_key_vault_name = "kv-aigw-bg-eus2"       # must be globally unique

@@ -6,12 +6,18 @@
 *.tfplan.*
 *.tfvars
 !*.tfvars.example
+# EXCEPTION to the filled-tfvars-never-committed rule: litellm-pin.auto.tfvars is non-secret by contract (litellm_image_tag + litellm_image_digest only)
+!envs/azure-eastus2/litellm-pin.auto.tfvars
 crash.log
 
 # Local env
 .env
 config/litellm.azure.yaml
 config/litellm.aws.yaml
+
+# Raw evidence
+artifacts/*.raw*
+artifacts/**/*.tmp
 
 # OS/editor
 .DS_Store

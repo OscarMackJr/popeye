@@ -29,3 +29,12 @@ jobs:
 
       - name: Validate Azure eastus2 root
         run: terraform -chdir=envs/azure-eastus2 validate
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Plan 01-06 adds the step that checks the real pin file (litellm-pin.auto.tfvars).
+      - name: GW-02 self-test LiteLLM advisory range checker
+        run: python scripts/Test-LitellmAdvisoryRange.py --self-test
