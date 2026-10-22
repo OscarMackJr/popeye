@@ -1,0 +1,11 @@
+{
+  "description": "Shared allowed_routes constant for LLM-only virtual keys. Phase 4 FLT and the Phase 5 issuer must reuse this list. key_type llm_api is deliberately NOT used because it still exposes /utils/token_counter, /utils/model_info and /utils/transform_request (Pitfall 2, D-06).",
+  "allowed_routes": [
+    "/v1/chat/completions",
+    "/chat/completions",
+    "/v1/embeddings",
+    "/embeddings",
+    "/v1/models",
+    "/models"
+  ]
+}
