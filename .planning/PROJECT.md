@@ -27,13 +27,10 @@ Every governed model call is attributed. Each completion through the gateway lan
 ### Active
 
 **MVP closure (Stage 1/2)**
-- [ ] In-VNet verification path in `vnet-popeye-stage1-stage2-eastus2` (eastus2), not the separate East US `EUS-POPEYE-VNET-01`:
-  - `AzureBastionSubnet` (/26 or larger) and Bastion host
-  - non-delegated `snet-verification-vm` (proposed 10.60.3.0/26 + 10.60.3.64/27, if free in 10.60.0.0/22), added through Terraform so state stays aligned
-  - private-only Windows Server 2022 VM; NSG allows 3389 only from the Bastion subnet and outbound 5432 to Postgres
-  - Entra sign-in with VM-scope Reader + Virtual Machine User Login for the two approved operators only, no Administrator Login unless explicitly approved
-- [ ] Private DB route proven from that VM via Bastion: `Resolve-DnsName` for `pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com` returns an RFC1918 address, and `Test-NetConnection -Port 5432` succeeds. Control-plane checks re-run with `-VmName` (no VM public IP, zero delegations on the VM subnet, PG public access disabled, private DNS link intact)
-- [ ] Verification VM decommissioned on an agreed date (VM, NIC, login roles, temporary NSG rules removed), with the evidence recorded
+- [ ] Peered caller network (`EUS-POPEYE-VNET-01` ↔ Stage 1/2 VNet) is proven, with peering ownership recorded. The private Postgres route passed on 2026-10-22.
+- [ ] A Container Apps environment private DNS zone is linked to both VNets, so the gateway FQDN resolves from callers.
+- [ ] The caller VM is hardened: RDP only from Bastion; User Login for the two approved operators only.
+- [ ] Temporary verification access is reviewed or removed on an agreed date.
 - [ ] A smoke completion through `twg-foundry` lands one attributed row in the regional ledger, with recorded evidence
 - [ ] Stable DNS (`gateway-azure.ai.twg.internal`) ownership decision recorded and the zone/record managed
 - [ ] Stage 1 measurement protocol run: latency overhead, budget counter lag, ledger freshness, ledger interruption, budget vs. provider-throttle payloads
@@ -89,7 +86,7 @@ Every governed model call is attributed. Each completion through the gateway lan
   - The existing `EUS-VM-POPEYE` (Windows Server 2022, no public IP, Entra sign-in) sits in `EUS-POPEYE-VNET-01`, East US, 10.10.2.4, with its own Bastion. That is a different environment. A connection from it doesn't prove connectivity from the Stage 1/2 eastus2 VNet.
   - The Stage 1/2 resource group has no Bastion.
   - VM login on `EUS-VM-POPEYE` currently grants Administrator Login to three identities, which exceeds the two approved operators. That needs correcting or explicit approval.
-  - **The private DB route from the Stage 1/2 VNet is therefore still unproven.** This supersedes the earlier "network resolved" answer.
+  - **Resolution (same day):** networking peered the two VNets instead. A read-only run-command test from `EUS-VM-POPEYE` proved Postgres (10.60.2.5:5432) and the gateway environment (10.60.0.108:443) over the peering. The environment domain does not yet resolve, because the private DNS zone is missing.
 - `STATE.md` (root) is the pre-GSD implementation log, last updated 2026-08-02. It stays as the human-facing state doc alongside `.planning/STATE.md`.
 
 ## Constraints
@@ -112,8 +109,7 @@ Every governed model call is attributed. Each completion through the gateway lan
 | Issuer runs as a second Container App, Python | Same network/identity envelope as the gateway; Python fits the existing validator tooling | — Pending |
 | Fallback chain P-4 → Option B (defer TC-REL-02/TC-COST-04 to Stage 3) | No second provider procured; descope rules allow it if stated explicitly | — Pending |
 | O1–O3 use proposed defaults (8h TTL, registry beside model registry, purpose = vocabulary validation if no user purpose list) | Unblocks implementation; limitations are stated rather than silent | — Pending |
-| Network proof must originate in `vnet-popeye-stage1-stage2-eastus2`; don't reuse `EUS-VM-POPEYE` / `EUS-POPEYE-VNET-01` | Proof from another VNet doesn't demonstrate the Stage 1/2 private route (networking review, 2026-10-22) | — Pending |
-| Verification subnets are added through Terraform, not ad hoc | Keeps deployed config and state aligned; the VNet is Terraform-managed | — Pending |
+| Network design is VNet peering from `EUS-POPEYE-VNET-01`, replacing a VM and Bastion inside the Stage 1/2 VNet | Networking chose peering. A peered caller VNet is how real callers connect, and the private route was proven on 2026-10-22 | ✓ Good |
 | Intune/Graph fleet scripts in scope | Needed to mint user keys (with tenant UUID) that agent keys derive from | — Pending |
 
 ## Evolution

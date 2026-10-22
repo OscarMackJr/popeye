@@ -9,25 +9,25 @@ Spec REQ/TC IDs (e.g. REQ-AGT-05 / TC-AGT-05) are cited in brackets. Where a spe
 
 ### Network Verification (NET)
 
-- [ ] **NET-01**: Terraform adds `AzureBastionSubnet` (/26 or larger) and a non-delegated `snet-verification-vm` to `vnet-popeye-stage1-stage2-eastus2` without overlapping 10.60.0.0/22 allocations, and the plan stays otherwise clean.
-- [ ] **NET-02**: A Bastion host exists in the Stage 1/2 VNet.
-- [ ] **NET-03**: A private-only Windows Server 2022 verification VM exists in `snet-verification-vm`:
-  - no public IP;
-  - the NSG allows 3389 only from `AzureBastionSubnet` and outbound 5432 to Postgres;
-  - Entra sign-in;
-  - VM-scope Reader + Virtual Machine User Login for the two approved operators only.
-- [ ] **NET-04**: An operator connected through Bastion resolves `pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com` to an RFC1918 address and gets `TcpTestSucceeded: True` on port 5432.
-- [ ] **NET-05**: `Test-PopeyeAzureVerificationVm.ps1 -VmName` passes all control-plane checks:
+The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (East US, 10.10.0.0/16) and reach the Stage 1/2 eastus2 VNet over VNet peering. This replaces the earlier proposal for a VM and Bastion inside the Stage 1/2 VNet (decided 2026-10-22).
+
+- [ ] **NET-01**: The peering `vnet-popeye-stage1-stage2-eastus2` ↔ `EUS-POPEYE-VNET-01` is Connected/FullyInSync both ways and allows VNet access. Its ownership is recorded: either imported into or referenced by Popeye Terraform, or documented as networking-owned, so `terraform plan` stays clean.
+- [ ] **NET-02**: The `privatelink.postgres.database.azure.com` zone is linked to both VNets, and Postgres public network access stays Disabled.
+- [ ] **NET-03**: A private DNS zone for the Container Apps environment default domain (`*.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` and apex → 10.60.0.108) exists and is linked to both VNets, so the gateway's internal FQDN resolves from the caller VNet.
+- [ ] **NET-04**: An operator on `EUS-VM-POPEYE`, connected through `EUS-POPEY-BASTION`, gets:
+  - an RFC1918 address when resolving the Postgres FQDN, and `TcpTestSucceeded: True` on 5432;
+  - the gateway's internal FQDN resolving to 10.60.0.108, with 443 reachable.
+
+  Redacted evidence is recorded.
+- [ ] **NET-05**: The caller VM's control-plane posture is verified, via `Test-PopeyeAzureVerificationVm.ps1` adapted for the peered caller VNet:
   - no public IP on the VM;
-  - zero delegations on the VM subnet;
-  - Bastion present;
-  - Postgres public access disabled;
-  - private DNS link intact;
-  - only the approved login assignments.
+  - Bastion subnet /26 or larger;
+  - the NSG allows inbound 3389 only from `AzureBastionSubnet`, so the internet-sourced `Allow_Iliya_Promenet` rule is removed or scoped;
+  - Entra sign-in enabled.
 
   Evidence is recorded.
-- [ ] **NET-06**: Excess VM Administrator Login assignments on `EUS-VM-POPEYE` are removed, or approved explicitly in writing.
-- [ ] **NET-07**: The verification VM, its NIC, login roles and temporary rules are decommissioned on an agreed date, and the decommission is recorded.
+- [ ] **NET-06**: VM login on `EUS-VM-POPEYE` is limited to the two approved operators with Virtual Machine User Login. Administrator Login is used only with written approval, and Roger's access is granted.
+- [ ] **NET-07**: Temporary verification access is reviewed on an agreed date and removed or renewed with a record: login roles, temporary NSG rules, and the VM if it is dedicated to Popeye.
 
 ### Gateway Upgrade & Hardening (GW)
 
@@ -193,13 +193,90 @@ Spec REQ/TC IDs (e.g. REQ-AGT-05 / TC-AGT-05) are cited in brackets. Where a spe
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by roadmapper) | | |
+| NET-01 | Phase 1 | Pending |
+| NET-02 | Phase 1 | Pending |
+| NET-03 | Phase 1 | Pending |
+| NET-04 | Phase 1 | Pending |
+| NET-05 | Phase 1 | Pending |
+| NET-06 | Phase 1 | Pending |
+| NET-07 | Phase 8 | Pending |
+| GW-01 | Phase 1 | Pending |
+| GW-02 | Phase 1 | Pending |
+| GW-03 | Phase 1 | Pending |
+| GW-04 | Phase 1 | Pending |
+| GW-05 | Phase 1 | Pending |
+| GW-06 | Phase 1 | Pending |
+| MVP-01 | Phase 1 | Pending |
+| MVP-02 | Phase 4 | Pending |
+| MVP-03 | Phase 3 | Pending |
+| MVP-04 | Phase 3 | Pending |
+| CON-01 | Phase 2 | Pending |
+| CON-02 | Phase 2 | Pending |
+| CON-03 | Phase 2 | Pending |
+| CON-04 | Phase 2 | Pending |
+| CON-05 | Phase 2 | Pending |
+| CON-06 | Phase 2 | Pending |
+| CON-07 | Phase 2 | Pending |
+| ENF-01 | Phase 3 | Pending |
+| ENF-02 | Phase 3 | Pending |
+| ENF-03 | Phase 3 | Pending |
+| ENF-04 | Phase 3 | Pending |
+| ENF-05 | Phase 3 | Pending |
+| ENF-06 | Phase 3 | Pending |
+| FLT-01 | Phase 4 | Pending |
+| FLT-02 | Phase 4 | Pending |
+| FLT-03 | Phase 4 | Pending |
+| FLT-04 | Phase 4 | Pending |
+| FLT-05 | Phase 4 | Pending |
+| FLT-06 | Phase 4 | Pending |
+| ISS-01 | Phase 5 | Pending |
+| ISS-02 | Phase 5 | Pending |
+| ISS-03 | Phase 5 | Pending |
+| ISS-04 | Phase 5 | Pending |
+| ISS-05 | Phase 5 | Pending |
+| ISS-06 | Phase 5 | Pending |
+| ISS-07 | Phase 5 | Pending |
+| ISS-08 | Phase 5 | Pending |
+| ISS-09 | Phase 5 | Pending |
+| ISS-10 | Phase 5 | Pending |
+| ISS-11 | Phase 5 | Pending |
+| ISS-12 | Phase 5 | Pending |
+| ISS-13 | Phase 5 | Pending |
+| ISS-14 | Phase 5 | Pending |
+| ISS-15 | Phase 5 | Pending |
+| INT-01 | Phase 6 | Pending |
+| INT-02 | Phase 6 | Pending |
+| INT-03 | Phase 6 | Pending |
+| INT-04 | Phase 6 | Pending |
+| INT-05 | Phase 6 | Pending |
+| INT-06 | Phase 6 | Pending |
+| INT-07 | Phase 6 | Pending |
+| INT-08 | Phase 6 | Pending |
+| INT-09 | Phase 6 | Pending |
+| INT-10 | Phase 6 | Pending |
+| INT-11 | Phase 6 | Pending |
+| SLO-01 | Phase 7 | Pending |
+| SLO-02 | Phase 7 | Pending |
+| SLO-03 | Phase 7 | Pending |
+| SLO-04 | Phase 7 | Pending |
+| ALR-01 | Phase 7 | Pending |
+| ALR-02 | Phase 7 | Pending |
+| ALR-03 | Phase 7 | Pending |
+| ALR-04 | Phase 7 | Pending |
+| ALR-05 | Phase 7 | Pending |
+| ALR-06 | Phase 7 | Pending |
+| DLP-01 | Phase 8 | Pending |
+| DLP-02 | Phase 8 | Pending |
+| DLP-03 | Phase 8 | Pending |
+| OPS-01 | Phase 8 | Pending |
+| OPS-02 | Phase 8 | Pending |
+| OPS-03 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 78 total
-- Mapped to phases: 0
-- Unmapped: 78 ⚠️
+- Mapped to phases: 78
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-22*
-*Last updated: 2026-10-22 after initial definition*
+*Last updated: 2026-10-22 after roadmap creation (traceability filled)*
