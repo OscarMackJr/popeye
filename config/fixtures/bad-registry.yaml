@@ -1,0 +1,16 @@
+data_classes:
+  - public
+  - internal
+  - confidential-personal
+  - regulated-financial
+  - regulated-identifier
+
+models:
+  - public_name: prohibited-identifier-model
+    cloud: azure
+    provider: foundry
+    approved_max_data_class: regulated-identifier
+
+teams:
+  - team_id: desktop-agents
+    default_data_class: internal

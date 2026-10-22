@@ -16,6 +16,7 @@ Source-controlled specifications for the AI gateway control plane.
 - [Popeye Implementation Review Remediation Spec v0.1](./POPEYE_IMPLEMENTATION_REVIEW_REMEDIATION_SPEC_v0.1.md) - implementation-ready remediation plan for all review findings.
 - [Popeye Implementation Review Remediation Prompt v0.1](./POPEYE_IMPLEMENTATION_REVIEW_REMEDIATION_PROMPT_v0.1.md) - phased execution prompt for remediation agents.
 - [State Backend Access Confirmation v0.1](./STATE_BACKEND_ACCESS_CONFIRMATION_v0.1.md) - Terraform state sensitivity and access-control confirmation.
+- [Session Credential Issuer Preparation v0.1](./SESSION_CREDENTIAL_ISSUER_v0.1.md) — review-gated issuer configuration and validation shape for the cross-repository session-credential contract.
 
 ## Cross-Repository Artifacts
 

@@ -1,0 +1,84 @@
+name: Registry Conformance
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  session-credential-schema:
+    name: Session credential request fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install schema validator
+        run: python -m pip install --disable-pip-version-check jsonschema==4.26.0
+
+      - name: REQ-CRED-01 validate issuance request fixtures
+        run: python scripts/Test-SessionCredentialFixtures.py
+
+  registry-conformance:
+    name: Registry and endpoint fixture checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check vocabulary conformance
+        shell: pwsh
+        run: |
+          $vocabulary = Get-Content config/vendored/vocabulary.yaml
+          $registry = Get-Content config/model-approval-registry.example.yaml
+          $vocabularyClasses = @($vocabulary | Where-Object { $_ -match '^  - ' } | ForEach-Object { ($_ -replace '^  - ', '').Trim() })[0..4]
+          $registryClasses = @($registry | Where-Object { $_ -match '^  - ' } | ForEach-Object { ($_ -replace '^  - ', '').Trim() })[0..4]
+          if (($registryClasses -join '|') -ne ($vocabularyClasses -join '|')) { throw "REQ-DCE-05: Registry classes must exactly match vendored vocabulary. Registry: $($registryClasses -join ', ')" }
+          if ($registry | Select-String -Pattern '^    approved_max_data_class: regulated-identifier$') { throw 'REQ-DCE-06: regulated-identifier is unapprovable.' }
+
+      - name: Check invalid registry is rejected
+        shell: pwsh
+        run: |
+          try {
+            ./scripts/Get-ModelAllowlist.ps1 -RegistryPath config/fixtures/bad-registry.yaml -Cloud azure -TeamId desktop-agents | Out-Null
+            throw 'Bad registry unexpectedly passed validation.'
+          }
+          catch {
+            if ($_.Exception.Message -eq 'Bad registry unexpectedly passed validation.') { throw }
+            if ($_.Exception.Message -notmatch 'REQ-DCE-06') { throw }
+          }
+
+      - name: Validate endpoint detection fixture
+        shell: pwsh
+        run: |
+          ./scripts/Read-EndpointDetections.ps1 -Path config/fixtures/detections.sample.jsonl
+          $badFixture = Join-Path $env:RUNNER_TEMP 'detections.invalid.jsonl'
+          Set-Content -LiteralPath $badFixture -Value '{"schema":"endpoint-detection/0.1","occurred_at":"not-a-date","workstation":"poc-ws-01.example.invalid","os_user":"alex@example.invalid","process":"demo-client.exe","destination":"api.openai.com","action":"blocked","profile":"twg-gateway-only"}'
+          try {
+            ./scripts/Read-EndpointDetections.ps1 -Path $badFixture | Out-Null
+            throw 'Invalid endpoint-detection fixture unexpectedly passed validation.'
+          }
+          catch {
+            if ($_.Exception.Message -eq 'Invalid endpoint-detection fixture unexpectedly passed validation.') { throw }
+          }
+
+      - name: Check tenant identifier validation
+        shell: pwsh
+        run: |
+          try {
+            ./scripts/provision-desktop-keys.ps1 -GatewayBaseUrl https://gateway.example.invalid -EntraGroupId 00000000-0000-0000-0000-000000000000 -MasterKeySecretUri https://vault.example.invalid/secrets/master-key -TenantId TENANT_ALPHA -DryRun | Out-Null
+            throw 'Invalid tenant identifier unexpectedly passed validation.'
+          }
+          catch {
+            if ($_.Exception.Message -eq 'Invalid tenant identifier unexpectedly passed validation.') { throw }
+            if ($_.Exception.Message -notmatch 'REQ-DCE-07') { throw }
+          }

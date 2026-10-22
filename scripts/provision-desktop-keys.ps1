@@ -24,6 +24,7 @@ param(
   [Parameter(Mandatory)] [string] $EntraGroupId,       # licensed desktop-agent users
   [Parameter(Mandatory)] [string] $MasterKeySecretUri, # Key Vault URI; resolved at runtime
   [decimal] $MonthlyBudgetUsd = 25.0,
+  [Parameter(Mandatory)] [string] $TenantId,           # canonical lowercase UUID from the shared vocabulary
   [string] $RegistryPath,
   [string] $Cloud = "azure",
   [string] $DataClass,
@@ -38,6 +39,11 @@ if ([string]::IsNullOrWhiteSpace($RegistryPath)) {
 }
 
 # TODO(stage-3): Connect-MgGraph -Identity (managed identity)
+$tenantIdPattern = '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+if ($TenantId -notmatch $tenantIdPattern) {
+  throw "REQ-DCE-07: TenantId must be a canonical lowercase UUID."
+}
+
 # TODO(stage-3): resolve master key from Key Vault via automation identity
 
 $members = @() # TODO: Get-MgGroupMember -GroupId $EntraGroupId -All
@@ -69,6 +75,7 @@ foreach ($m in $members) {
     models          = @($allowlist.models)
     metadata        = @{
       data_class       = $allowlist.data_class
+      tenant_id        = $TenantId
       allowlist_source = $allowlist.registry_path
       allowlist_cloud  = $allowlist.cloud
     }

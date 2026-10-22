@@ -3,7 +3,7 @@
 Project codename: Popeye
 
 Status: Active
-Last updated: 2026-08-01
+Last updated: 2026-08-02
 Audience: future implementation agents and maintainers resuming work
 Primary post-read action: resume the next engineering task with the correct context and guardrails.
 

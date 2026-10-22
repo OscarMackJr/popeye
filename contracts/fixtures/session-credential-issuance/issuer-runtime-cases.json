@@ -1,0 +1,47 @@
+[
+  {
+    "name": "REQ-CRED-01 onward delegation is refused",
+    "request": {
+      "principal_type": "agent",
+      "agent_id": "claims-summary-agent",
+      "on_behalf_of": "research-agent-42",
+      "purpose": "servicing",
+      "tenant_id": "5325ffe9-5727-4d88-9832-aebabb8d0538",
+      "requested_ttl_seconds": 7200,
+      "session_id": "dfd63d7e-2fd0-4cac-8fc8-63f1427a0d12",
+      "device_ref": "managed-device:example-001"
+    },
+    "issuer_context": { "on_behalf_of_principal_type": "agent" },
+    "expected_issuer_outcome": "distinct onward-delegation error"
+  },
+  {
+    "name": "REQ-CRED-01 requested TTL is clamped",
+    "request": {
+      "principal_type": "agent",
+      "agent_id": "claims-summary-agent",
+      "on_behalf_of": "alex@example.invalid",
+      "purpose": "servicing",
+      "tenant_id": "5325ffe9-5727-4d88-9832-aebabb8d0538",
+      "requested_ttl_seconds": 31536000,
+      "session_id": "dfd63d7e-2fd0-4cac-8fc8-63f1427a0d12",
+      "device_ref": "managed-device:example-001"
+    },
+    "issuer_context": { "maximum_ttl_seconds": "issuer configuration" },
+    "expected_issuer_outcome": "issued response reports a clamped expires_at"
+  },
+  {
+    "name": "REQ-CRED-01 unauthorized caller is refused",
+    "request": {
+      "principal_type": "agent",
+      "agent_id": "claims-summary-agent",
+      "on_behalf_of": "alex@example.invalid",
+      "purpose": "servicing",
+      "tenant_id": "5325ffe9-5727-4d88-9832-aebabb8d0538",
+      "requested_ttl_seconds": 7200,
+      "session_id": "dfd63d7e-2fd0-4cac-8fc8-63f1427a0d12",
+      "device_ref": "managed-device:example-001"
+    },
+    "issuer_context": { "caller_authorized": false },
+    "expected_issuer_outcome": "distinct unauthorized-issuer error; D-1 decides the credential mechanism"
+  }
+]

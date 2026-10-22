@@ -1,0 +1,77 @@
+﻿{
+    "validationUtc":  "2026-10-21T18:20:39.0570583Z",
+    "subscriptionId":  "98c2b71b-539f-4801-9c37-229efa10beda",
+    "postgresFqdn":  "pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com",
+    "resourceGroup":  "rg-popeye-stage1-stage2-eastus2",
+    "vnet":  {
+                 "name":  "vnet-popeye-stage1-stage2-eastus2",
+                 "id":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-popeye-stage1-stage2-eastus2",
+                 "addressPrefixes":  [
+                                         "10.60.0.0/22"
+                                     ]
+             },
+    "postgres":  {
+                     "id":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.DBforPostgreSQL/flexibleServers/pg-popeye-stage1-stage2-eastus2",
+                     "fqdn":  "pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com",
+                     "publicNetworkAccess":  "Disabled",
+                     "delegatedSubnetId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-popeye-stage1-stage2-eastus2/subnets/snet-postgres",
+                     "privateDnsZoneId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com"
+                 },
+    "privateDns":  {
+                       "model":  "VNet-integrated Flexible Server",
+                       "zoneName":  "privatelink.postgres.database.azure.com",
+                       "zoneId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com",
+                       "links":  [
+                                     {
+                                         "name":  "link-eus-popeye-vnet-01",
+                                         "virtualNetworkId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VNET-01/providers/Microsoft.Network/virtualNetworks/EUS-POPEYE-VNET-01",
+                                         "registrationEnabled":  false
+                                     },
+                                     {
+                                         "name":  "pg-vnet-link",
+                                         "virtualNetworkId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-popeye-stage1-stage2-eastus2",
+                                         "registrationEnabled":  false
+                                     }
+                                 ]
+                   },
+    "bastion":  {
+                    "hosts":  [
+
+                              ],
+                    "subnet":  [
+
+                               ]
+                },
+    "checks":  [
+                   {
+                       "Check":  "Popeye VNet located",
+                       "Status":  "PASS",
+                       "Detail":  "vnet-popeye-stage1-stage2-eastus2 in rg-popeye-stage1-stage2-eastus2"
+                   },
+                   {
+                       "Check":  "PostgreSQL public network access disabled",
+                       "Status":  "PASS",
+                       "Detail":  "publicNetworkAccess=Disabled"
+                   },
+                   {
+                       "Check":  "Private DNS zone linked to Popeye VNet",
+                       "Status":  "PASS",
+                       "Detail":  "model=VNet-integrated Flexible Server; zone=privatelink.postgres.database.azure.com"
+                   },
+                   {
+                       "Check":  "Bastion exists in Popeye VNet",
+                       "Status":  "FAIL",
+                       "Detail":  "Bastion hosts: "
+                   },
+                   {
+                       "Check":  "AzureBastionSubnet is /26 or larger when present",
+                       "Status":  "FAIL",
+                       "Detail":  "Subnet prefix: "
+                   },
+                   {
+                       "Check":  "Verification VM-specific checks",
+                       "Status":  "FAIL",
+                       "Detail":  "Not run: rerun with -VmName after provisioning."
+                   }
+               ]
+}

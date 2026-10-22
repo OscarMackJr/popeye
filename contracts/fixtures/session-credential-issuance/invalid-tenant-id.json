@@ -1,0 +1,10 @@
+{
+  "principal_type": "agent",
+  "agent_id": "claims-summary-agent",
+  "on_behalf_of": "alex@example.invalid",
+  "purpose": "servicing",
+  "tenant_id": "TENANT_ALPHA",
+  "requested_ttl_seconds": 7200,
+  "session_id": "dfd63d7e-2fd0-4cac-8fc8-63f1427a0d12",
+  "device_ref": "managed-device:example-001"
+}

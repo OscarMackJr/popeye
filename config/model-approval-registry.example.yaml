@@ -5,8 +5,9 @@
 data_classes:
   - public
   - internal
-  - confidential
-  - regulated
+  - confidential-personal
+  - regulated-financial
+  - regulated-identifier
 
 models:
   - public_name: twg-foundry
@@ -16,16 +17,16 @@ models:
     approved_max_data_class: internal
     owner: platform
     rationale: "Stage 2 pilot Foundry deployment; synthetic/internal data only."
-  - public_name: twg-foundry-regulated
+  - public_name: twg-foundry-regulated-financial
     cloud: azure
     provider: foundry
     deployment_var: foundry_regulated_deployment_name
-    approved_max_data_class: regulated
+    approved_max_data_class: regulated-financial
     owner: platform
-    rationale: "Example regulated approval used for allowlist derivation tests."
+    rationale: "Example financial-regulated approval used for allowlist derivation tests."
 
 teams:
   - team_id: desktop-agents
     default_data_class: internal
   - team_id: regulated-apps
-    default_data_class: regulated
+    default_data_class: regulated-financial

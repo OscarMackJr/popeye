@@ -172,6 +172,9 @@ foreach ($model in @($registry.models)) {
 
   Assert-KnownDataClass -Classes $classes -Value $model.approved_max_data_class -FieldName "models[$($model.public_name)].approved_max_data_class"
 
+  if ($model.approved_max_data_class -eq "regulated-identifier") {
+    throw "REQ-DCE-06: models must not approve the unapprovable data class 'regulated-identifier'."
+  }
   $modelKey = "$($model.public_name)|$($model.cloud)"
   if ($seenModels.ContainsKey($modelKey)) {
     throw "Invalid registry shape: duplicate model approval for '$($model.public_name)' in cloud '$($model.cloud)'."

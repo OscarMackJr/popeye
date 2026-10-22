@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://popeye.twg.internal/schemas/endpoint-detection/0.1",
+  "title": "Popeye endpoint detection event",
+  "type": "object",
+  "required": [
+    "schema",
+    "occurred_at",
+    "workstation",
+    "os_user",
+    "process",
+    "destination",
+    "action",
+    "profile"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "endpoint-detection/0.1" },
+    "occurred_at": { "type": "string", "format": "date-time", "pattern": "Z$" },
+    "workstation": { "type": "string", "minLength": 1 },
+    "os_user": { "type": "string", "minLength": 1 },
+    "process": { "type": "string", "minLength": 1 },
+    "destination": { "type": "string", "minLength": 1 },
+    "action": { "const": "blocked" },
+    "profile": { "const": "twg-gateway-only" }
+  }
+}
