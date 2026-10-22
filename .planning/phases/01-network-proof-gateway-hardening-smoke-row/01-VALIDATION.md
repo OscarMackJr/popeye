@@ -39,15 +39,15 @@ created: 2026-10-22
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 01-02-T1, 01-05-T3, 01-09-T1 | — | — | NET-01..03 | — | Peering Connected both ways; PG + env zones linked to both VNets; PG public Disabled | control-plane | `pwsh scripts/Test-PopeyeAzureVerificationVm.ps1` (extended) | extend | ⬜ pending |
-| 01-02-T2, 01-09-T1 | — | — | NET-04 | — | PG RFC1918 + 5432; gateway FQDN -> 10.60.0.108 + 443 | VM-side | `pwsh scripts/Test-PopeyeVerificationVm.ps1` (gateway FQDN added) | extend | ⬜ pending |
-| 01-02-T1, 01-09-T1 | — | — | NET-05, NET-06 | — | No public IP; RDP only from AzureBastionSubnet; login roles limited | control-plane | `pwsh scripts/Test-PopeyeAzureVerificationVm.ps1` (NSG/role checks) | extend | ⬜ pending |
+| 01-02-T2, 01-08-T2, 01-09-T1 | — | — | NET-04 | — | PG RFC1918 + 5432; gateway FQDN -> 10.60.0.108 + 443; also from interactive Bastion session | VM-side | `pwsh scripts/Test-PopeyeVerificationVm.ps1` (run-command and Bastion session) | extend | ⬜ pending |
+| 01-02-T1, 01-09-T1 | — | — | NET-05, NET-06 | — | No public IP; RDP only from AzureBastionSubnet; login roles limited; both named operators hold VM User Login | control-plane | `pwsh scripts/Test-PopeyeAzureVerificationVm.ps1` (NSG/role checks, per-operator positive assertion) | extend | ⬜ pending |
 | 01-06-T1, 01-07-T3 | — | — | GW-01 | — | Running revision image = v1.106.x@sha256 digest | integration | `az containerapp show` image check + `/health/readiness` | ❌ W0 | ⬜ pending |
 | 01-01-T1, 01-06-T3 | — | — | GW-02 | — | CI fails on GHSA-affected pin | fixture | `python scripts/Test-LitellmAdvisoryRange.py --self-test` | ❌ W0 | ⬜ pending |
 | 01-03-T2, 01-08-T2 | — | — | GW-03 | — | User key on `/key/*`, `/user/*`, `/utils/*` -> 403; UI locked | integration (VM) | `pwsh scripts/Test-PopeyeGatewayLockdown.ps1` | ❌ W0 | ⬜ pending |
-| 01-06-T1, 01-07-T3, 01-08-T2 | — | — | GW-04 | — | SIGTERM flushes batched spend; grace period set | integration | revision swap N sent = N rows; `az containerapp show` spec check | ❌ W0 | ⬜ pending |
+| 01-06-T1, 01-07-T3, 01-08-T2 | — | — | GW-04 | — | SIGTERM flushes batched spend; grace period set | integration | `Invoke-PopeyeSmoke.ps1 -Action Run -Count 3`, revision swap, `Test-PopeyeVerificationPsql.ps1 -ExpectedCount 3`; `az containerapp show` spec check | ❌ W0 | ⬜ pending |
 | 01-06-T2, 01-07-T3 | — | — | GW-05 | — | TTL <= 30, client creds false, LOG=ERROR, no prompt storage | static | grep of rendered YAML / `terraform validate` | ❌ W0 | ⬜ pending |
-| 01-04-T3, 01-08-T2 | — | — | GW-06 | — | Redis counters shared across replicas; public access Disabled | integration | `az resource show` publicNetworkAccess + budget 422 on both replicas | ❌ W0 | ⬜ pending |
-| 01-03-T1, 01-08-T2 | — | — | MVP-01 | — | Exactly one attributed ledger row; evidence redacted | e2e | `Invoke-PopeyeSmoke.ps1` then `Test-PopeyeVerificationPsql.ps1 -RequestId` | ❌ W0 | ⬜ pending |
+| 01-04-T3, 01-08-T2 | — | — | GW-06 | — | Redis counters shared across replicas; public access Disabled | integration | `az resource show` publicNetworkAccess + budget 422 plus requests served by >= 2 replicas with Redis counter keys incrementing | ❌ W0 | ⬜ pending |
+| 01-03-T1, 01-08-T2 | — | — | MVP-01 | — | Exactly one attributed ledger row; evidence redacted | e2e | `Invoke-PopeyeSmoke.ps1` then `Test-PopeyeVerificationPsql.ps1 -RequestId` (count, key_alias, user, team, tag booleans) | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
