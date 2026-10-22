@@ -1,0 +1,23 @@
+{
+  "generated": "2026-10-22",
+  "source": "https://github.com/BerriAI/litellm/security/advisories",
+  "ranges": [
+    {"id": "GHSA-7hp6-4w63-5g45", "severity": "critical", "affected": [["1.91.0", "1.100.4"], ["1.101.0", "1.101.3"], ["1.102.0", "1.102.2"], ["1.103.0", "1.103.1"]], "note": "half-open [lo,hi); 1.104.0rc1 also affected, rc tags not allowed"},
+    {"id": "GHSA-g5ff-637f-6q2m", "severity": "high", "affected": [["0.0.0", "1.95.0"]]},
+    {"id": "GHSA-3cv6-jpf6-8222", "severity": "medium", "affected": [["0.0.0", "1.94.0"]], "note": "patched backports exist on old lines; gate stays conservative"},
+    {"id": "GHSA-4xpc-pv4p-pm3w", "severity": "critical", "affected": [["0.0.0", "1.84.0"]]},
+    {"id": "GHSA-r75f-5x8p-qvmc", "severity": "critical", "affected": [["1.81.16", "1.83.7"]]},
+    {"id": "GHSA-hhww-mrg2-969h", "severity": "medium", "affected": [["1.65.5", "1.85.0"]]},
+    {"id": "GHSA-4g5m-c9r5-49xf", "severity": "low", "affected": [["0.0.0", "1.83.10"]], "note": "advisory expressed with -stable suffix"},
+    {"id": "GHSA-5jmr-gcrj-2c9q", "severity": "medium", "affected": [["0.0.0", "1.83.7"]], "note": "advisory expressed with -stable suffix"},
+    {"id": "GHSA-hx8v-g79f-8w5f", "severity": "medium", "affected": [["0.0.0", "1.83.9"]], "note": "advisory says <=1.83.8"},
+    {"id": "GHSA-72m8-9m7m-h278", "severity": "low", "affected": [["0.0.0", "1.82.0"]], "note": "advisory expressed with -stable suffix"},
+    {"id": "GHSA-7488-6r32-c95q", "severity": "high", "affected": [["0.0.0", "1.84.0"]]},
+    {"id": "GHSA-v4p8-mg3p-g94g", "severity": "high", "affected": [["1.74.2", "1.83.7"]]},
+    {"id": "GHSA-wxxx-gvqv-xp7p", "severity": "medium", "affected": [["1.81.8", "1.83.10"]]},
+    {"id": "GHSA-xqmj-j6mv-4862", "severity": "high", "affected": [["1.80.5", "1.83.7"]]},
+    {"id": "GHSA-69x8-hrgq-fjj8", "severity": "high", "affected": [["0.0.0", "1.83.0"]]},
+    {"id": "GHSA-53mr-6c8q-9789", "severity": "high", "affected": [["0.0.0", "1.83.0"]]},
+    {"id": "GHSA-jjhc-v7c2-5hh6", "severity": "critical", "affected": [["0.0.0", "1.83.0"]]}
+  ]
+}
