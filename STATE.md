@@ -3,7 +3,7 @@
 Project codename: Popeye
 
 Status: Active
-Last updated: 2026-08-02
+Last updated: 2026-10-22
 Audience: future implementation agents and maintainers resuming work
 Primary post-read action: resume the next engineering task with the correct context and guardrails.
 
@@ -48,6 +48,20 @@ Non-Terraform:
 
 Continue the combined Stage 1/Stage 2 MVP:
 
+0. Prove the private network path from inside `vnet-popeye-stage1-stage2-eastus2` (eastus2). This is a prerequisite for item 1.
+   - **Networking review (2026-10-22):**
+     - The existing `EUS-VM-POPEYE` is in `EUS-POPEYE-VNET-01` (East US), a different environment, so its connectivity proves nothing for Stage 1/2.
+     - `rg-popeye-stage1-stage2-eastus2` has no Bastion.
+   - **Required steps:**
+     1. Confirm free space in 10.60.0.0/22.
+     2. Add through Terraform, coordinated with the Terraform owner: `AzureBastionSubnet` (/26 or larger, e.g. 10.60.3.0/26) and a non-delegated `snet-verification-vm` (e.g. 10.60.3.64/27).
+     3. Create Bastion in that VNet.
+     4. Create a private-only Windows Server 2022 VM (`popeye-net-verify-01`). Its NSG allows 3389 only from `AzureBastionSubnet` and outbound 5432 to Postgres.
+     5. Install AADLoginForWindows. Grant Reader and Virtual Machine User Login at VM scope to the two approved operators only. No Administrator Login without explicit approval.
+     6. Through Bastion, run `Resolve-DnsName` (expect an RFC1918 address) and `Test-NetConnection -Port 5432` (expect `TcpTestSucceeded: True`) against `pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com`.
+     7. Re-run `scripts/Test-PopeyeAzureVerificationVm.ps1 -VmName popeye-net-verify-01`.
+     8. Record the evidence. Decommission the VM, NIC, roles and temporary rules on an agreed date.
+   - Do not enable PostgreSQL public access, and do not change private DNS unless validation proves it broken.
 1. Run a smoke completion through the internal gateway and confirm one attributed row lands in the regional ledger. The current workstation cannot resolve the internal Container Apps FQDN, and `az containerapp exec` did not accept non-interactive smoke commands even though ARM reports both replicas running and ready.
 2. Use the smoke evidence to complete the Stage 1 measurement protocol: latency overhead, budget counter lag, ledger freshness, ledger interruption, and budget-versus-provider-throttle payload capture. Run fallback behavior only if the second backend is available; otherwise record it as skipped with the Cloud access owner carrying the second-provider prerequisite.
 3. Hand hometown read access and request ID/attribution expectations for the `ai_token_usage` chargeback query; Popeye owns the grant and ledger path, not the Cube model.
@@ -59,6 +73,7 @@ Continue the combined Stage 1/Stage 2 MVP:
 - Terraform has been initialized, validated, planned, and applied against the TWG Architecture POCs subscription. Final drift check reported no changes.
 - Gateway config delivery is now ADR-002: Terraform renders non-secret LiteLLM YAML into a Container Apps secret. Revisit before production if config size, promotion workflow, or audit needs justify a baked image or mounted file.
 - Conservative page alerts now cover gateway 5xx responses, low gateway replicas, and Postgres availability. Full burn-rate rules and notify-level budget/fallback/attribution alerts still need Stage 1 baseline thresholds and data-source confirmation.
+- In-VNet verification is not yet proven (2026-10-22 networking review): no Bastion or verification subnet exists in the Stage 1/2 VNet. Separately, VM login on `EUS-VM-POPEYE` grants Administrator Login to three identities, more than the two approved operators. Correct this or obtain explicit approval.
 - Application-VNet peering and the `ai.twg.internal` private DNS zone ownership remain Stage 2 follow-ups. Decision needed by 2026-08-15: central networking owns and delegates/creates `gateway-azure.ai.twg.internal`, or this stack gains variables/data sources to manage the private DNS zone. Owner placeholder: popeye platform owner plus central networking owner.
 - Intune/Graph script bodies are skeletons; Stage 3 work.
 - Content guardrail/DLP evaluation is now in MVP scope; no implementation or baseline exists yet.
