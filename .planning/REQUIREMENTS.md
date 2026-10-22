@@ -11,22 +11,22 @@ Spec REQ/TC IDs (e.g. REQ-AGT-05 / TC-AGT-05) are cited in brackets. Where a spe
 
 The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (East US, 10.10.0.0/16) and reach the Stage 1/2 eastus2 VNet over VNet peering. This replaces the earlier proposal for a VM and Bastion inside the Stage 1/2 VNet (decided 2026-10-22).
 
-- [ ] **NET-01**: The peering `vnet-popeye-stage1-stage2-eastus2` ↔ `EUS-POPEYE-VNET-01` is Connected/FullyInSync both ways and allows VNet access. Its ownership is recorded: either imported into or referenced by Popeye Terraform, or documented as networking-owned, so `terraform plan` stays clean.
-- [ ] **NET-02**: The `privatelink.postgres.database.azure.com` zone is linked to both VNets, and Postgres public network access stays Disabled.
-- [ ] **NET-03**: A private DNS zone for the Container Apps environment default domain (`*.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` and apex → 10.60.0.108) exists and is linked to both VNets, so the gateway's internal FQDN resolves from the caller VNet.
-- [ ] **NET-04**: An operator on `EUS-VM-POPEYE`, connected through `EUS-POPEY-BASTION`, gets:
+- [x] **NET-01**: The peering `vnet-popeye-stage1-stage2-eastus2` ↔ `EUS-POPEYE-VNET-01` is Connected/FullyInSync both ways and allows VNet access. Its ownership is recorded: either imported into or referenced by Popeye Terraform, or documented as networking-owned, so `terraform plan` stays clean.
+- [x] **NET-02**: The `privatelink.postgres.database.azure.com` zone is linked to both VNets, and Postgres public network access stays Disabled.
+- [x] **NET-03**: A private DNS zone for the Container Apps environment default domain (`*.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` and apex → 10.60.0.108) exists and is linked to both VNets, so the gateway's internal FQDN resolves from the caller VNet.
+- [x] **NET-04**: An operator on `EUS-VM-POPEYE`, connected through `EUS-POPEY-BASTION`, gets:
   - an RFC1918 address when resolving the Postgres FQDN, and `TcpTestSucceeded: True` on 5432;
   - the gateway's internal FQDN resolving to 10.60.0.108, with 443 reachable.
 
   Redacted evidence is recorded.
-- [ ] **NET-05**: The caller VM's control-plane posture is verified, via `Test-PopeyeAzureVerificationVm.ps1` adapted for the peered caller VNet:
+- [x] **NET-05**: The caller VM's control-plane posture is verified, via `Test-PopeyeAzureVerificationVm.ps1` adapted for the peered caller VNet:
   - no public IP on the VM;
   - Bastion subnet /26 or larger;
   - the NSG allows inbound 3389 only from `AzureBastionSubnet`, so the internet-sourced `Allow_Iliya_Promenet` rule is removed or scoped;
   - Entra sign-in enabled.
 
   Evidence is recorded.
-- [ ] **NET-06**: VM login on `EUS-VM-POPEYE` is limited to the two approved operators with Virtual Machine User Login. Administrator Login is used only with written approval, and Roger's access is granted.
+- [x] **NET-06**: VM login on `EUS-VM-POPEYE` is limited to the two approved operators with Virtual Machine User Login. Administrator Login is used only with written approval, and Roger's access is granted.
 - [ ] **NET-07**: Temporary verification access is reviewed on an agreed date and removed or renewed with a record: login roles, temporary NSG rules, and the VM if it is dedicated to Popeye.
 
 ### Gateway Upgrade & Hardening (GW)
@@ -193,12 +193,12 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NET-01 | Phase 1 | Pending |
-| NET-02 | Phase 1 | Pending |
-| NET-03 | Phase 1 | Pending |
-| NET-04 | Phase 1 | Pending |
-| NET-05 | Phase 1 | Pending |
-| NET-06 | Phase 1 | Pending |
+| NET-01 | Phase 1 | Complete |
+| NET-02 | Phase 1 | Complete |
+| NET-03 | Phase 1 | Complete |
+| NET-04 | Phase 1 | Complete |
+| NET-05 | Phase 1 | Complete |
+| NET-06 | Phase 1 | Complete |
 | NET-07 | Phase 8 | Pending |
 | GW-01 | Phase 1 | Pending |
 | GW-02 | Phase 1 | Pending |

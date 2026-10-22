@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-22T21:20:38.907Z"
-last_activity: 2026-10-22 -- Phase 01 execution started
+last_updated: "2026-10-22T21:48:27.114Z"
+last_activity: 2026-10-22
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 9
-  completed_plans: 0
+  completed_plans: 3
   percent: 0
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 ## Current Position
 
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
-Plan: 1 of 9
-Status: Executing Phase 01
-Last activity: 2026-10-22 -- Phase 01 execution started
+Plan: 2 of 9
+Status: Ready to execute
+Last activity: 2026-10-22
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P02 | multi-session | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,7 @@ Recent decisions affecting current work:
 - [Roadmap]: NET-07 (temporary access review) is placed in Phase 8 because the peered caller VM is also the runner for the smoke test, the Stage 1 measurements and the DLP evaluation.
 - [2026-10-22]: Network design is peering. Callers in `EUS-POPEYE-VNET-01` reach the Stage 1/2 VNet over VNet peering, replacing the proposal for a VM and Bastion inside the Stage 1/2 VNet.
 - [Roadmap]: Phases needing `--research-phase`: 1, 3 (highest), 4 (FQDN routing), 5, 6, 8 (DLP).
+- [Phase 01]: Phase 01-02: env DNS zone owned by networking; D-08 extended to database-url/reader-dsn (user-approved); VM tooling via Install-PopeyeVmTooling.ps1 before plan 08
 
 ### Pending Todos
 
@@ -92,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-22T19:17:31.039Z
+Last session: 2026-10-22T21:48:14.181Z
 Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-network-proof-gateway-hardening-smoke-row/01-CONTEXT.md
+Resume file: None

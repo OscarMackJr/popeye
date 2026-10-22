@@ -53,7 +53,7 @@ This milestone closes the Stage 1/Stage 2 MVP and builds the ratified v0.4.x age
 **Wave 1**
 
 - [x] 01-01-PLAN.md — GHSA advisory-range checker, CI self-test, gitignore and tfvars.example fixes (GW-02)
-- [ ] 01-02-PLAN.md — Extend network verification scripts, amend VM procedure, record DNS-ownership/tooling preflight (NET-01..06)
+- [x] 01-02-PLAN.md — Extend network verification scripts, amend VM procedure, record DNS-ownership/tooling preflight (NET-01..06)
 - [x] 01-03-PLAN.md — Ceremony scripts: reader SQL, smoke, lockdown, row assertion (MVP-01, GW-03, GW-06)
 - [ ] 01-04-PLAN.md — Redis private endpoint, clustering spike, public access Disabled (GW-06)
 
@@ -198,7 +198,7 @@ Phases run in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8. Phases 1 and 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Network Proof, Gateway Hardening & Smoke Row | 2/9 | In Progress|  |
+| 1. Network Proof, Gateway Hardening & Smoke Row | 3/9 | In Progress|  |
 | 2. Contracts, Decisions & Registries | 0/TBD | Not started | - |
 | 3. Gateway Hook, Image & Ledger Contract | 0/TBD | Not started | - |
 | 4. Stable FQDN & Fleet Key Provisioning | 0/TBD | Not started | - |
