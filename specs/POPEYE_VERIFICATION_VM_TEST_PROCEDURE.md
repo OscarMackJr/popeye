@@ -1,5 +1,7 @@
 # Popeye Verification VM Test Procedure
 
+> Revision 2026-10-22: Phase 1 D-08/D-18 amendment to step 7. Allows a time-boxed, secret-scoped, recorded grant on `litellm-master-key` to the platform owner only; keeps salt/writer restrictions; VM identity gets no Key Vault grant; secret-touching steps run in an interactive Bastion session, run-command only for non-secret checks. The `litellm-database-url` extension was confirmed by the platform owner on 2026-10-22.
+
 Use this after the temporary Stage 1/2 verification VM is provisioned. It separates Azure administrator checks from the checks that run from the VM.
 
 ## Azure administrator checks
@@ -10,7 +12,13 @@ Use this after the temporary Stage 1/2 verification VM is provisioned. It separa
 4. Confirm Microsoft Entra sign-in is enabled on the VM. Only Oscar Mack and Roger may have the required narrow-scope Reader permissions and `Virtual Machine User Login` (or Administrator Login only where approved).
 5. Confirm `privatelink.postgres.database.azure.com` is linked to the Popeye VNet and contains the existing PostgreSQL private-endpoint record. Do not change DNS records or add a link unless the current configuration fails validation.
 6. Inspect NSGs and UDRs; permit only the required VM-to-private-endpoint TCP 5432 traffic. Do not enable PostgreSQL public network access.
-7. Confirm Key Vault access is restricted to `litellm-reader-dsn` after it exists. Do not grant the VM identity or either operator access to `litellm-database-url`, writer, master, or salt secrets.
+7. Confirm Key Vault access follows the amended rules below (Revision 2026-10-22). Outside the admin-ceremony window, no operator holds access to `litellm-database-url`, writer, master, or salt secrets; `litellm-reader-dsn` stays readable by the operators as before.
+   - (a) The platform owner may hold `Key Vault Secrets User` scoped to the single secret `litellm-master-key` (scope `<kv id>/secrets/litellm-master-key`, never vault scope), only for the admin-ceremony window.
+   - (b) Grant and removal timestamps plus Key Vault diagnostic-log references go into the evidence.
+   - (c) The SQL step needs the Postgres admin credential, so a second identical time-boxed, secret-scoped grant on `litellm-database-url` and read of `litellm-reader-dsn` is allowed under the same rules as (a) and (b). This extends D-08 and was confirmed by the platform owner on 2026-10-22 (see plan 01-08 Task 1).
+   - (d) The salt and writer secrets stay forbidden to everyone.
+   - (e) The VM managed identity receives no Key Vault grant (no Key Vault grant of any kind). Secret-touching steps run in an interactive Bastion session with the operator's own `az login`; run-command is for non-secret DNS/TCP checks only (D-18).
+   - (f) The master key is never written to disk, logs or tickets.
 
 ## VM connectivity checks
 
