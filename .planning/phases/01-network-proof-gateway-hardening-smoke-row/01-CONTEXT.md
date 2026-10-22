@@ -93,6 +93,19 @@ Evidence: `artifacts/popeye-peered-caller-connectivity-2026-10-22.md`.
   Separate applies keep failures attributable.
 - **D-17:** Peering ownership, the RDP NSG rule (`Allow_Iliya_Promenet`), and VM login role fixes (User Login for the two approved operators only) are **networking actions requested by email**. Phase 1 verifies them and records evidence. Popeye Terraform doesn't change them unless networking hands them over.
 
+### Post-research decisions (2026-10-22)
+- **D-18:** **Amends D-11.** `az vm run-command` runs as SYSTEM with no operator identity, so it can't use the D-08 grant.
+  - Secret-touching steps run in an **interactive Bastion session** on `EUS-VM-POPEYE`, with the operator signed in through `az login`. Those steps are: fetching the master key, minting the smoke key, applying the reader SQL, the smoke call, and the psql row assertion.
+  - Run-command stays for the non-secret DNS/TCP checks only.
+  - The VM's managed identity gets **no** Key Vault grant.
+- **D-19:** **Amends D-05/D-06 and the UI clause of success criterion 5.** In v1.106.2, `DISABLE_ADMIN_UI` returns HTTP 200 with a "disabled" page rather than 401/403. Phase 1 accepts a **documented deviation**.
+  - **UI pass condition:**
+    - the disabled page is served;
+    - `general_settings.disable_env_credential_login: true` rejects `POST /login`;
+    - only static assets are reachable.
+  - Literal 401/403 on the UI is deferred to the Phase 4/5 ingress path block. The deviation is recorded in the phase evidence.
+  - The management routes (`/key/*`, `/user/*`, `/utils/*`) must still return 401/403. They're closed with an explicit `allowed_routes` list, because `key_type: llm_api` alone still allows some `/utils/*` routes.
+
 ### Claude's Discretion
 - Exact config-hardening mechanics:
   - `exec` in the container args;
