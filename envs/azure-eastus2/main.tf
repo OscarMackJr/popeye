@@ -110,6 +110,55 @@ resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
   virtual_network_id    = azurerm_virtual_network.gateway.id
 }
 
+# --- Redis private endpoint (D-15, D-16) -----------------------------
+# Managed Redis is reached only through a private endpoint in a
+# non-delegated subnet. Stage A applies this with public access Enabled,
+# a clustering compatibility spike runs, then stage B disables public
+# access as its own apply. The DNS zone is linked to this VNet only;
+# callers never need Redis.
+
+resource "azurerm_subnet" "private_endpoints" {
+  name                 = "snet-private-endpoints"
+  resource_group_name  = azurerm_resource_group.gateway.name
+  virtual_network_name = azurerm_virtual_network.gateway.name
+  address_prefixes     = [var.private_endpoints_subnet_cidr]
+}
+
+resource "azurerm_private_dns_zone" "redis" {
+  name                = "privatelink.redis.azure.net"
+  resource_group_name = azurerm_resource_group.gateway.name
+  tags                = local.tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "redis" {
+  name                  = "redis-vnet-link"
+  resource_group_name   = azurerm_resource_group.gateway.name
+  private_dns_zone_name = azurerm_private_dns_zone.redis.name
+  virtual_network_id    = azurerm_virtual_network.gateway.id
+  registration_enabled  = false
+  tags                  = local.tags
+}
+
+resource "azurerm_private_endpoint" "redis" {
+  name                = "pe-${local.name_prefix}-redis"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.gateway.name
+  subnet_id           = azurerm_subnet.private_endpoints.id
+  tags                = local.tags
+
+  private_service_connection {
+    name                           = "redis"
+    private_connection_resource_id = module.state.redis_id
+    subresource_names              = ["redisEnterprise"]
+    is_manual_connection           = false
+  }
+
+  private_dns_zone_group {
+    name                 = "redis"
+    private_dns_zone_ids = [azurerm_private_dns_zone.redis.id]
+  }
+}
+
 # --- Gateway secrets vault -------------------------------------------
 # Distinct from the break-glass vault (different readers, different
 # purpose). Holds master key, salt key, database URL.
@@ -206,6 +255,9 @@ module "state" {
   postgres_private_dns_zone_id = azurerm_private_dns_zone.postgres.id
   redis_name                   = "redis-${local.name_prefix}"
   tags                         = local.tags
+
+  managed_redis_public_network_access = var.redis_public_network_access
+  redis_clustering_policy             = var.redis_clustering_policy
 
   depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
 }

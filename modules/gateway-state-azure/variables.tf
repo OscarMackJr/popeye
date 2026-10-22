@@ -61,9 +61,25 @@ variable "managed_redis_high_availability_enabled" {
 }
 
 variable "managed_redis_public_network_access" {
-  description = "Public network access until private endpoint support is added to the POC module."
+  description = "Redis public network access. The root sets Disabled once the private endpoint exists (D-16); module default stays Enabled so it is safe standalone."
   type        = string
   default     = "Enabled"
+
+  validation {
+    condition     = contains(["Enabled", "Disabled"], var.managed_redis_public_network_access)
+    error_message = "managed_redis_public_network_access must be Enabled or Disabled."
+  }
+}
+
+variable "redis_clustering_policy" {
+  description = "Managed Redis clustering policy. NoCluster/EnterpriseCluster work with plain (non-cluster) clients such as LiteLLM's; OSSCluster does not (RESEARCH Pitfall 5)."
+  type        = string
+  default     = "NoCluster"
+
+  validation {
+    condition     = contains(["OSSCluster", "EnterpriseCluster", "NoCluster"], var.redis_clustering_policy)
+    error_message = "redis_clustering_policy must be OSSCluster, EnterpriseCluster or NoCluster."
+  }
 }
 
 variable "tags" {

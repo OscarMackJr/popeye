@@ -62,6 +62,7 @@ resource "azurerm_managed_redis" "gateway" {
     access_keys_authentication_enabled = true
     client_protocol                    = "Encrypted"
     eviction_policy                    = "NoEviction"
+    clustering_policy                  = var.redis_clustering_policy
   }
 
   # Redis down => enforcement degrades toward permissive, requests

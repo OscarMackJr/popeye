@@ -30,6 +30,29 @@ variable "postgres_subnet_cidr" {
   default = "10.60.2.0/24"
 }
 
+variable "private_endpoints_subnet_cidr" {
+  description = "Non-delegated subnet for private endpoints (snet-private-endpoints), D-15."
+  type        = string
+  default     = "10.60.3.0/27"
+}
+
+variable "redis_public_network_access" {
+  description = "Managed Redis public network access. Disabled by default (GW-06); apply once with Enabled for stage A (D-16)."
+  type        = string
+  default     = "Disabled"
+
+  validation {
+    condition     = contains(["Enabled", "Disabled"], var.redis_public_network_access)
+    error_message = "redis_public_network_access must be Enabled or Disabled."
+  }
+}
+
+variable "redis_clustering_policy" {
+  description = "Managed Redis clustering policy; NoCluster for plain clients, EnterpriseCluster is the documented fallback."
+  type        = string
+  default     = "NoCluster"
+}
+
 variable "gateway_key_vault_name" {
   description = "Globally unique name for the gateway secrets vault."
   type        = string
