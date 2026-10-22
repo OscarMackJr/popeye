@@ -43,7 +43,17 @@ This milestone closes the Stage 1/Stage 2 MVP and builds the ratified v0.4.x age
   4. The gateway serves traffic on patched LiteLLM 1.106.x, pinned by tag and digest. CI fails a PR that pins a GHSA-affected version.
   5. A user key calling `/key/*`, `/user/*` or `/utils/*`, or the admin UI, gets 401/403. A revision swap flushes batched spend on SIGTERM. Redis backs budget counters across replicas and has public access disabled.
   6. A synthetic completion from the peered caller through `twg-foundry` produces exactly one attributed ledger row, with redacted evidence (timestamp, `request_id`) recorded.
-**Plans**: TBD
+**Plans**: 9 plans
+Plans:
+- [ ] 01-01-PLAN.md — GHSA advisory-range checker, CI self-test, gitignore and tfvars.example fixes (GW-02)
+- [ ] 01-02-PLAN.md — Extend network verification scripts, amend VM procedure, record DNS-ownership/tooling preflight (NET-01..06)
+- [ ] 01-03-PLAN.md — Ceremony scripts: reader SQL, smoke, lockdown, row assertion (MVP-01, GW-03, GW-06)
+- [ ] 01-04-PLAN.md — Redis private endpoint, clustering spike, public access Disabled (GW-06)
+- [ ] 01-05-PLAN.md — Conditional env DNS zone and reader-DSN secret (NET-03, MVP-01)
+- [ ] 01-06-PLAN.md — Upgrade/hardening code, pin file, CI pin check (GW-01..06)
+- [ ] 01-07-PLAN.md — Pin-day re-check, rollback runbook, backup, in-place upgrade apply (GW-01, GW-04, GW-05)
+- [ ] 01-08-PLAN.md — Admin ceremony: smoke row, lockdown, counters, SIGTERM flush (MVP-01, GW-03, GW-04, GW-06)
+- [ ] 01-09-PLAN.md — Final network evidence refresh and evidence index (NET-01..06)
 **Research flag**: Needs `--research-phase`. Re-check GHSA on pin day, the 1.90 -> 1.106 breaking changes (422 budget response), Redis wiring and cluster mode, and the impact of Prisma migrations on hometown grants.
 
 ### Phase 2: Contracts, Decisions & Registries
@@ -144,7 +154,7 @@ Phases run in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8. Phases 1 and 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Network Proof, Gateway Hardening & Smoke Row | 0/TBD | Not started | - |
+| 1. Network Proof, Gateway Hardening & Smoke Row | 0/9 | Not started | - |
 | 2. Contracts, Decisions & Registries | 0/TBD | Not started | - |
 | 3. Gateway Hook, Image & Ledger Contract | 0/TBD | Not started | - |
 | 4. Stable FQDN & Fleet Key Provisioning | 0/TBD | Not started | - |
