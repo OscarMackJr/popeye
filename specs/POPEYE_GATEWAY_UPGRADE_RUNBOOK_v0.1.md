@@ -2,7 +2,7 @@
 
 In-place upgrade of the LiteLLM gateway on Azure Container Apps to the pinned 1.106.x release (plan 01-07; D-01, D-02, D-03; GW-01, GW-04, GW-05). The pin lives in `envs/azure-eastus2/litellm-pin.auto.tfvars`, which holds only the tag and digest. CI checks it against `config/litellm-advisory-ranges.json`.
 
-previous image reference: <fill before apply>
+previous image reference: ghcr.io/berriai/litellm:v1.90.3 (running revision, pulled by tag; GHCR digest for v1.90.3 on 2026-10-23: sha256:e4b91a2de9367ab0987baaa767b2283390badd5a361357993de1a05f027edc22)
 
 ## Pin-day re-check (2026-10-23)
 
@@ -19,7 +19,7 @@ Never pin 1.91.0–1.100.3 (GHSA-7hp6-4w63-5g45), and never pin `latest` or an r
 1. Plan 01-04 is complete. Redis `publicNetworkAccess` is Disabled and the gateway is healthy (D-16 ordering).
 2. The previous image reference is recorded above, read from `az containerapp show -n <app> -g <rg> --query "properties.template.containers[0].image" -o tsv`.
 3. A Postgres backup point is taken or confirmed (D-02), using either:
-   - `az postgres flexible-server backup create -g <rg> -n <pg server> --backup-name pre-litellm-1106-<yyyymmdd>`, or
+   - `az postgres flexible-server backup create -g <rg> -s <pg server> -n pre-litellm-1106-<yyyymmdd>`, or
    - an automated backup with a restore point less than an hour old (`az postgres flexible-server backup list`).
 
    Record the backup name and the UTC time.
