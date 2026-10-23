@@ -19,3 +19,13 @@ output "breakglass_approvers_group_object_id" {
 output "log_analytics_workspace_id" {
   value = module.observability.log_analytics_workspace_id
 }
+
+output "env_default_domain" {
+  description = "Container Apps environment default domain (env private DNS zone name)."
+  value       = module.service.default_domain
+}
+
+output "env_static_ip" {
+  description = "Container Apps environment static IP (expected A record target)."
+  value       = module.service.static_ip
+}

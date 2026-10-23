@@ -307,6 +307,80 @@ module "breakglass" {
   tags                       = local.tags
 }
 
+# --- Env DNS zone (D-14) and ledger reader (D-13) --------------------
+# The Container Apps environment private DNS zone is count-gated and off
+# by default: networking owns it unless it hands ownership to Popeye.
+# Zone name and IP come from module outputs, never literals. Links have
+# registration disabled.
+resource "azurerm_private_dns_zone" "containerapps_env" {
+  count               = var.manage_env_dns_zone ? 1 : 0
+  name                = module.service.default_domain
+  resource_group_name = azurerm_resource_group.gateway.name
+  tags                = local.tags
+}
+
+resource "azurerm_private_dns_a_record" "containerapps_env_wildcard" {
+  count               = var.manage_env_dns_zone ? 1 : 0
+  name                = "*"
+  zone_name           = azurerm_private_dns_zone.containerapps_env[0].name
+  resource_group_name = azurerm_resource_group.gateway.name
+  ttl                 = 300
+  records             = [module.service.static_ip]
+}
+
+resource "azurerm_private_dns_a_record" "containerapps_env_apex" {
+  count               = var.manage_env_dns_zone ? 1 : 0
+  name                = "@"
+  zone_name           = azurerm_private_dns_zone.containerapps_env[0].name
+  resource_group_name = azurerm_resource_group.gateway.name
+  ttl                 = 300
+  records             = [module.service.static_ip]
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "containerapps_env_stage" {
+  count                 = var.manage_env_dns_zone ? 1 : 0
+  name                  = "envzone-stage-link"
+  resource_group_name   = azurerm_resource_group.gateway.name
+  private_dns_zone_name = azurerm_private_dns_zone.containerapps_env[0].name
+  virtual_network_id    = azurerm_virtual_network.gateway.id
+  registration_enabled  = false
+  tags                  = local.tags
+}
+
+# Creating the caller link needs Microsoft.Network/virtualNetworks/join/action
+# on the caller VNet; without it this is a networking action (D-17).
+resource "azurerm_private_dns_zone_virtual_network_link" "containerapps_env_caller" {
+  count                 = var.manage_env_dns_zone && var.caller_vnet_id != "" ? 1 : 0
+  name                  = "envzone-caller-link"
+  resource_group_name   = azurerm_resource_group.gateway.name
+  private_dns_zone_name = azurerm_private_dns_zone.containerapps_env[0].name
+  virtual_network_id    = var.caller_vnet_id
+  registration_enabled  = false
+  tags                  = local.tags
+}
+
+# Read-only ledger reader credential. Terraform only generates the password
+# and stores the DSN; the ekg_cube_reader role itself is created by
+# sql/ai_usage_grants_azure.sql during the ceremony, not by Terraform.
+# The gateway UAMI holds vault-scope Secrets User so it can technically
+# read this secret (accepted, T-05-03).
+resource "random_password" "ekg_cube_reader" {
+  length  = 32
+  special = false
+}
+
+resource "azurerm_key_vault_secret" "reader_dsn" {
+  name         = "litellm-reader-dsn"
+  key_vault_id = azurerm_key_vault.gateway.id
+  value = format(
+    "postgresql://ekg_cube_reader:%s@%s:5432/%s?sslmode=require",
+    random_password.ekg_cube_reader.result,
+    module.state.postgres_fqdn,
+    module.state.litellm_database_name,
+  )
+  depends_on = [azurerm_role_assignment.deployer_secrets_officer]
+}
+
 # --- Internal DNS ----------------------------------------------------
 # gateway-azure.ai.twg.internal -> Container App internal FQDN.
 # TODO(stage-2, decision due 2026-08-15): central networking either
