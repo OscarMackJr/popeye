@@ -4,12 +4,12 @@ milestone: v0.3
 milestone_name: milestone
 status: executing
 last_updated: "2026-10-22T21:48:27.114Z"
-last_activity: 2026-10-22
+last_activity: 2026-10-23
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 9
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-10-22
+Last activity: 2026-10-23 - 01-04 Redis private cutover complete (GW-06)
 
-Progress: [███░░░░░░░] 33%
+Progress: [████░░░░░░] 44%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Recent decisions affecting current work:
 - [Roadmap]: NET-07 (temporary access review) is placed in Phase 8 because the peered caller VM is also the runner for the smoke test, the Stage 1 measurements and the DLP evaluation.
 - [2026-10-22]: Network design is peering. Callers in `EUS-POPEYE-VNET-01` reach the Stage 1/2 VNet over VNet peering, replacing the proposal for a VM and Bastion inside the Stage 1/2 VNet.
 - [Roadmap]: Phases needing `--research-phase`: 1, 3 (highest), 4 (FQDN routing), 5, 6, 8 (DLP).
+- [Phase 01]: 01-04: Redis clustering policy stays NoCluster (spike all PASS over the private endpoint); Redis publicNetworkAccess Disabled 2026-10-23
 - [Phase 01]: Phase 01-02: env DNS zone owned by networking; D-08 extended to database-url/reader-dsn (user-approved); VM tooling via Install-PopeyeVmTooling.ps1 before plan 08
 
 ### Pending Todos
@@ -85,6 +86,12 @@ None yet.
 - Program/nono decisions needed early in Phase 2: G11 (`on_behalf_of` format, one-way door), G2 (budget model, before any fleet mint), the `direct_gateway` default, and the G3 admin-revocation carve-out (OPS-03 depends on it).
 - Hook internals are LOW confidence until the Phase 3 spike, which gates the Phase 5 metadata contract.
 - The 60s revocation bound may be read as end-to-end (about 120s worst case). Clarify with nono, hometown and olive before Phase 6.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 261023-d0i | Close out plan 01-04 Redis private cutover with operator evidence | 2026-10-23 | docs(quick-261023-d0i) | [261023-d0i-close-out-plan-01-04-redis-private-cutov](./quick/261023-d0i-close-out-plan-01-04-redis-private-cutov/) |
 
 ## Deferred Items
 
