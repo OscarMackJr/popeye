@@ -76,6 +76,8 @@ None yet.
 
 ### Blockers/Concerns
 
+- Plan 01-08 HELD (2026-10-23). EUS-VM-POPEYE has no outbound internet: the psql/az install failed, and operator `az login` on the VM also needs Entra/ARM/Key Vault egress. The env DNS zone (NET-03) is also still pending. Both are networking asks. The D-08 database-url grant extension is already approved (2026-10-22).
+
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
 - The peered-caller data-plane test passed on 2026-10-22 (`artifacts/popeye-peered-caller-connectivity-2026-10-22.md`):

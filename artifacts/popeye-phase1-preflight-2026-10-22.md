@@ -50,3 +50,14 @@ env-dns-resolution: blocked-on-networking
 - Applied with default variables on 2026-10-23 (`manage_env_dns_zone = false`): only the ledger reader password and the `litellm-reader-dsn` Key Vault secret were added. The secret was confirmed by name only (`az keyvault secret list`). `terraform plan -detailed-exitcode` then exited 0.
 - `scripts/Test-PopeyeVerificationVm.ps1` via run-command on EUS-VM-POPEYE: Postgres resolves into the Postgres subnet (RFC1918) and TCP 5432 connects (PASS); VM has no public IP (PASS); the gateway FQDN in the environment domain returns "DNS name does not exist" and TCP 443 fails.
 - NET-03 blocked: awaiting networking (2026-10-23). Networking still has to create the environment private DNS zone with `*`/`@` records for the environment staticIp, linked to both VNets. Plan 09 hard-gates on this.
+
+## Tooling install attempt (2026-10-23)
+
+psql-on-vm: no
+az-on-vm: no
+
+- `scripts/Install-PopeyeVmTooling.ps1` via run-command failed with "Unable to connect to the remote server" on the first download (Azure CLI MSI, aka.ms). `-CheckTooling` confirms neither tool is on PATH.
+- EUS-VM-POPEYE has no outbound internet. The ceremony (plan 08) is held until networking provides one of:
+  - HTTPS egress for the installers (`aka.ms` / `azcliprod.blob.core.windows.net`, `get.enterprisedb.com`) and for operator `az login` (`login.microsoftonline.com`, `management.azure.com`, `*.vault.azure.net`); or
+  - an approved way to place the installers on the VM, plus the Azure endpoints above.
+- The env DNS zone (NET-03) is also still pending. Plan 08 needs the gateway FQDN to resolve from the VM.
