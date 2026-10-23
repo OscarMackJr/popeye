@@ -222,7 +222,11 @@ print('readiness status:', urllib.request.urlopen('http://localhost:4000/health/
 "@
 
   Write-Step 'Console logs (last 200 lines)'
-  $logs = az containerapp logs show -n $ContainerAppName -g $ResourceGroupName --type console --tail 200 --format text 2>$null
+  $logs = @(az containerapp logs show -n $ContainerAppName -g $ResourceGroupName --type console --tail 200 --format text 2>$null)
+  # The log stream host can fail (e.g. TLS-intercepting proxy); an empty read must not count as clean.
+  if ($LASTEXITCODE -ne 0 -or $logs.Count -eq 0) {
+    throw 'REQ-GW-06: could not read console logs (log stream failed or empty); check them in Log Analytics (ContainerAppConsoleLogs_CL) instead.'
+  }
   $bad = @($logs | Select-String -Pattern 'ConnectionError|MOVED|CROSSSLOT')
   if ($bad.Count) { throw "REQ-GW-06: $($bad.Count) ConnectionError/MOVED/CROSSSLOT log lines after stage B." }
   Write-Host 'PASS: no ConnectionError/MOVED/CROSSSLOT in the last 200 console lines' -ForegroundColor Green
