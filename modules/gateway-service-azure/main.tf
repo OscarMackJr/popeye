@@ -6,6 +6,9 @@
 # Design rules carried from the specs:
 # - Image tag is pinned by variable with no default; latest is
 #   structurally impossible (roadmap Tier-0 posture).
+# - Image is pinned by tag AND digest (D-03, GW-01); exec litellm makes
+#   litellm PID 1 so SIGTERM reaches the spend flush, with a 45 s grace
+#   period (GW-04); admin UI off and errors-only logs (D-05, D-19).
 # - min_replicas >= 2: replica count is a capacity decision, not a
 #   correctness decision (roadmap 4.2).
 # - No provider API keys in configuration; Foundry auth is managed
@@ -113,14 +116,20 @@ resource "azurerm_container_app" "gateway" {
     min_replicas = var.min_replicas
     max_replicas = var.max_replicas
 
+    # GW-04: PROXY_BATCH_WRITE_AT (10 s) + 10 s minimum; 45 gives headroom
+    # so the spend-log flush completes on SIGTERM during a revision swap.
+    termination_grace_period_seconds = 45
+
     container {
       name = "litellm"
 
-      # Pinned release tag only; enforced by variable validation.
-      image = "ghcr.io/berriai/litellm:${var.litellm_image_tag}"
+      # Pinned tag AND digest; enforced by variable validation (D-03, GW-01).
+      # A1: if ACA rejects tag@digest on first apply, fall back to
+      # digest-only: ghcr.io/berriai/litellm@${var.litellm_image_digest}
+      image = "ghcr.io/berriai/litellm:${var.litellm_image_tag}@${var.litellm_image_digest}"
 
       command = ["/bin/sh", "-c"]
-      args    = ["printf '%s' \"$LITELLM_CONFIG\" > /tmp/litellm.yaml && litellm --config /tmp/litellm.yaml --host 0.0.0.0 --port 4000"]
+      args    = ["printf '%s' \"$LITELLM_CONFIG\" > /tmp/litellm.yaml && exec litellm --config /tmp/litellm.yaml --host 0.0.0.0 --port 4000"]
 
       cpu    = var.container_cpu
       memory = var.container_memory
@@ -170,10 +179,29 @@ resource "azurerm_container_app" "gateway" {
         value = azurerm_user_assigned_identity.gateway.client_id
       }
 
+      # D-05: admin UI disabled (disabled page); GW-05: errors-only logs.
+      env {
+        name  = "DISABLE_ADMIN_UI"
+        value = "True"
+      }
+
+      env {
+        name  = "LITELLM_LOG"
+        value = "ERROR"
+      }
+
+      # Explicit so the grace-period arithmetic above is auditable.
+      env {
+        name  = "PROXY_BATCH_WRITE_AT"
+        value = "10"
+      }
+
       # ADR-002: deploy the non-secret LiteLLM routing config as a
       # Container Apps secret and write it to disk at process startup.
       # Provider credentials stay in managed identity / Key Vault paths.
 
+      # Startup budget: 10 s x 60 covers the ~86 Prisma migrations on the
+      # jump to 1.106.x (Pitfall 7).
       startup_probe {
         transport               = "HTTP"
         port                    = 4000
@@ -181,13 +209,13 @@ resource "azurerm_container_app" "gateway" {
         initial_delay           = 10
         interval_seconds        = 10
         timeout                 = 3
-        failure_count_threshold = 18
+        failure_count_threshold = 60
       }
 
       readiness_probe {
         transport               = "HTTP"
         port                    = 4000
-        path                    = "/health/liveliness"
+        path                    = "/health/readiness"
         interval_seconds        = 10
         timeout                 = 3
         failure_count_threshold = 3

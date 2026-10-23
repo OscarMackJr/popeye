@@ -12,12 +12,27 @@ variable "location" {
 }
 
 variable "litellm_image_tag" {
-  description = "Pinned LiteLLM image tag. A specific -stable release; never latest (Tier-0 posture, March 2026 supply-chain lesson)."
+  description = "Pinned LiteLLM image tag, plain vX.Y.Z (the -stable suffix no longer exists). Never latest (Tier-0 posture, March 2026 supply-chain lesson)."
   type        = string
 
   validation {
     condition     = var.litellm_image_tag != "latest" && var.litellm_image_tag != ""
-    error_message = "Pin a specific LiteLLM -stable tag. Never latest."
+    error_message = "Pin a specific LiteLLM tag. Never latest, never empty."
+  }
+
+  validation {
+    condition     = can(regex("^v1\\.\\d+\\.\\d+$", var.litellm_image_tag))
+    error_message = "litellm_image_tag must match ^v1[.]\\d+[.]\\d+$ (for example v1.106.2)."
+  }
+}
+
+variable "litellm_image_digest" {
+  description = "OCI digest of the pinned LiteLLM image (sha256:<64 hex>). Appended to the tag so a swapped mutable tag cannot change what runs."
+  type        = string
+
+  validation {
+    condition     = can(regex("^sha256:[0-9a-f]{64}$", var.litellm_image_digest))
+    error_message = "litellm_image_digest must match ^sha256:[0-9a-f]{64}$."
   }
 }
 
