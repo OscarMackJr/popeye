@@ -9,7 +9,7 @@ progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-10-23 - 01-06 LiteLLM v1.106.2 upgrade/hardening code written (not applied)
+Last activity: 2026-10-23 - 01-07 gateway upgraded to LiteLLM v1.106.2 (revision --0000005)
 
-Progress: [███████░░░] 67%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Recent decisions affecting current work:
 - [Roadmap]: NET-07 (temporary access review) is placed in Phase 8 because the peered caller VM is also the runner for the smoke test, the Stage 1 measurements and the DLP evaluation.
 - [2026-10-22]: Network design is peering. Callers in `EUS-POPEYE-VNET-01` reach the Stage 1/2 VNet over VNet peering, replacing the proposal for a VM and Bastion inside the Stage 1/2 VNet.
 - [Roadmap]: Phases needing `--research-phase`: 1, 3 (highest), 4 (FQDN routing), 5, 6, 8 (DLP).
+- [Phase 01]: 01-07: LiteLLM v1.106.2@digest live 2026-10-23; backup pre-litellm-1106-20261023; coordination_redis log line unobservable under LITELLM_LOG=ERROR, proof moves to 01-08
 - [Phase 01]: 01-05: networking-owns branch; litellm-reader-dsn applied 2026-10-23; env DNS Terraform count-gated off
 - [Phase 01]: 01-04: Redis clustering policy stays NoCluster (spike all PASS over the private endpoint); Redis publicNetworkAccess Disabled 2026-10-23
 - [Phase 01]: Phase 01-02: env DNS zone owned by networking; D-08 extended to database-url/reader-dsn (user-approved); VM tooling via Install-PopeyeVmTooling.ps1 before plan 08
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 None yet.
 
 ### Blockers/Concerns
+
+- Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
 - The peered-caller data-plane test passed on 2026-10-22 (`artifacts/popeye-peered-caller-connectivity-2026-10-22.md`):
   - Postgres DNS resolves to 10.60.2.5;

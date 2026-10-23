@@ -30,8 +30,10 @@ Applied the saved plan: 0 added, 1 changed, 0 destroyed (29 s). New revision `po
 | GW-04 PID 1 | `/app/.venv/bin/python3 /app/.venv/bin/litellm --config` (litellm, not sh) — PASS |
 | GW-05 env names include DISABLE_ADMIN_UI, LITELLM_LOG (and PROXY_BATCH_WRITE_AT) | PASS |
 | In-replica `/health/readiness` and `/health/liveliness` | 200 / 200 — PASS |
-| GW-05/GW-06 boot log `coordination_redis: using a standalone Redis…`, no MOVED/CROSSSLOT/ConnectionError | PENDING (portal Log Analytics query) |
+| GW-05/GW-06 boot log: no MOVED/CROSSSLOT/ConnectionError | PASS (Log Analytics: `--0000005` has 20 console rows, the banner and Prisma query-engine line from each of 2 replicas; no error lines) |
+| GW-06 `coordination_redis: using a standalone Redis…` line | NOT OBSERVABLE: INFO line suppressed by `LITELLM_LOG=ERROR` (GW-05). Behavioral proof is the plan 01-08 cross-replica counter test |
+| 01-04 Health re-check: `--0000004` (22,826 console rows, 24 h) MOVED/CROSSSLOT/ConnectionError | 0 — PASS |
 | `terraform plan -detailed-exitcode` after apply | 0 — PASS |
 | `scripts/Test-LitellmAdvisoryRange.py` | exit 0 — PASS |
 
-Note: on the operator workstation, `az containerapp logs show` and `az monitor log-analytics query` fail certificate verification (TLS-intercepting proxy on Azure data-plane hosts). Management-plane calls and `az containerapp exec` work. Console logs are read in the portal.
+Note: on the operator workstation, `az containerapp logs show` and `az monitor log-analytics query` fail certificate verification (TLS-intercepting proxy on Azure data-plane hosts). Management-plane calls and `az containerapp exec` work. Console logs are read in the portal (Log Analytics → Logs, KQL mode, table `ContainerAppConsoleLogs_CL`).
