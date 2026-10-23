@@ -27,7 +27,7 @@ if ($ValidateOnly) { Write-Host "PASS: parameters valid."; exit 0 }
 
 function Add-Result {
   param(
-    [Parameter(Mandatory)] [System.Collections.Generic.List[object]] $Results,
+    [Parameter(Mandatory)] [AllowEmptyCollection()] [System.Collections.Generic.List[object]] $Results,
     [Parameter(Mandatory)] [string] $Check,
     [Parameter(Mandatory)] [bool] $Passed,
     [Parameter(Mandatory)] [string] $Detail

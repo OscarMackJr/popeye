@@ -51,7 +51,7 @@ function Test-Rfc1918Address {
 
 function Add-Result {
   param(
-    [Parameter(Mandatory)] [System.Collections.Generic.List[object]] $Results,
+    [Parameter(Mandatory)] [AllowEmptyCollection()] [System.Collections.Generic.List[object]] $Results,
     [Parameter(Mandatory)] [string] $Check,
     [Parameter(Mandatory)] [bool] $Passed,
     [Parameter(Mandatory)] [string] $Detail
@@ -66,7 +66,7 @@ function Add-Result {
 
 function Test-NameAndPort {
   param(
-    [Parameter(Mandatory)] [System.Collections.Generic.List[object]] $Results,
+    [Parameter(Mandatory)] [AllowEmptyCollection()] [System.Collections.Generic.List[object]] $Results,
     [Parameter(Mandatory)] [string] $Label,
     [Parameter(Mandatory)] [string] $Name,
     [Parameter(Mandatory)] [int] $Port,
