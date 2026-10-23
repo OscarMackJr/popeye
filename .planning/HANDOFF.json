@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-10-23T16:12:13.854Z",
+  "phase": "01",
+  "phase_name": "network-proof-gateway-hardening-smoke-row",
+  "phase_dir": ".planning/phases/01-network-proof-gateway-hardening-smoke-row",
+  "plan": 8,
+  "task": 1,
+  "total_tasks": 3,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": "01-04", "name": "Redis private cutover (GW-06)", "status": "done", "commit": "e1e8850"},
+    {"id": "01-05", "name": "Env DNS Terraform + reader DSN secret", "status": "done", "commit": "f9d3915"},
+    {"id": "01-06", "name": "LiteLLM 1.106.x upgrade/hardening code", "status": "done", "commit": "f73b545"},
+    {"id": "01-07", "name": "LiteLLM v1.106.2 in-place upgrade", "status": "done", "commit": "1b0ca84"},
+    {"id": "01-08 T1", "name": "Ceremony readiness", "status": "in_progress", "progress": "credential decision done (extend-grant, 2026-10-22); VM tooling and gateway DNS blocked on networking"}
+  ],
+  "remaining_tasks": [
+    {"id": "01-08 T1", "name": "Confirm psql/az on VM and gateway FQDN resolution", "status": "blocked"},
+    {"id": "01-08 T2", "name": "Admin ceremony in Bastion session", "status": "not_started"},
+    {"id": "01-08 T3", "name": "Ceremony follow-up per plan", "status": "not_started"},
+    {"id": "01-09", "name": "Network evidence refresh + requirement-to-evidence index", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "No private DNS zone for the Container Apps environment domain; gateway FQDN unresolvable from EUS-VM-POPEYE (NET-03)", "type": "external", "workaround": "none; networking-owned (D-14/D-17)"},
+    {"description": "EUS-VM-POPEYE has no outbound internet: psql/az install failed; az login needs login.microsoftonline.com, management.azure.com, *.vault.azure.net", "type": "external", "workaround": "approved installer side-load still needs the Azure endpoints"}
+  ],
+  "human_actions_pending": [
+    {"action": "Networking: create env private DNS zone (* and @ -> env static IP) linked to both VNets", "context": "NET-03; plan 08/09 gate", "blocking": true},
+    {"action": "Networking: HTTPS egress from EUS-VM-POPEYE for az login endpoints and installer downloads", "context": "plan 08 ceremony tooling", "blocking": true},
+    {"action": "Networking: remove NSG rule Allow_Iliya_Promenet; User Login for both approved operators", "context": "NET-06, carried from 2026-10-22", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "Redis clustering policy NoCluster", "rationale": "all plain-client spike rows PASS over private endpoint", "phase": "01"},
+    {"decision": "Env DNS networking-owns; manage_env_dns_zone=false", "rationale": "preflight decision D-14/D-17", "phase": "01"},
+    {"decision": "LiteLLM v1.106.2@sha256:7294b90f... live", "rationale": "GHSA unchanged, latest stable 1.106.x, GHCR digest matches (2026-10-23)", "phase": "01"},
+    {"decision": "GW-06 proof via 01-08 cross-replica counter", "rationale": "coordination_redis INFO line suppressed by LITELLM_LOG=ERROR", "phase": "01"}
+  ],
+  "uncommitted_files": ["scripts/Test-PopeyeAzureVerificationVm.zip (untracked, intentionally not committed)"],
+  "next_action": "Ask whether networking delivered env DNS zone and VM egress; if yes, re-run Test-PopeyeVerificationVm.ps1 (gateway DNS/443) and Install-PopeyeVmTooling.ps1 + -CheckTooling via run-command, record in preflight, then /gsd-execute-phase 1 at 01-08.",
+  "context_notes": "No in-flight code. All work pushed to origin/main at 89283f9 before this handoff. Operator workstation proxy breaks az data-plane calls; use the portal for logs. Read .continue-here.md blocking constraint (vacuous pass on empty reads) before resuming."
+}
