@@ -35,6 +35,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Plan 01-06 adds the step that checks the real pin file (litellm-pin.auto.tfvars).
       - name: GW-02 self-test LiteLLM advisory range checker
         run: python scripts/Test-LitellmAdvisoryRange.py --self-test
+
+      - name: GW-02 check pinned LiteLLM version against advisory ranges
+        run: python scripts/Test-LitellmAdvisoryRange.py
