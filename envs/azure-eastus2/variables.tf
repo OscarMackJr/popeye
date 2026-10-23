@@ -120,3 +120,19 @@ variable "breakglass_approvers_principal_id" {
   type        = string
   default     = ""
 }
+variable "manage_env_dns_zone" {
+  description = "Set true only if networking hands ownership of the Container Apps environment private DNS zone to Popeye (D-14). Default false: networking owns it."
+  type        = bool
+  default     = false
+}
+
+variable "caller_vnet_id" {
+  description = "Resource id of the caller VNet (EUS-POPEYE-VNET-01). Empty skips the caller link. Real value goes in gitignored terraform.tfvars only."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.caller_vnet_id == "" || can(regex("^/subscriptions/[0-9a-f-]{36}/resourcegroups/[^/]+/providers/microsoft.network/virtualnetworks/[^/]+$", lower(var.caller_vnet_id)))
+    error_message = "caller_vnet_id must be empty or a virtualNetworks resource id."
+  }
+}
