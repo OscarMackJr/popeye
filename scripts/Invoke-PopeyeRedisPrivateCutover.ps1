@@ -138,6 +138,9 @@ function Wait-Replicas([string] $Revision) {
 
 function Invoke-ReplicaCommand([string] $Command) {
   & az containerapp exec -n $ContainerAppName -g $ResourceGroupName --command $Command
+  if ($LASTEXITCODE -ne 0) {
+    throw 'REQ-GW-06: az containerapp exec failed. On 429 Too Many Requests wait for retry-after (about 10 minutes) before rerunning.'
+  }
 }
 
 function Invoke-InReplica([string] $PythonCode) {
@@ -162,8 +165,9 @@ function Invoke-InReplica([string] $PythonCode) {
     $mode = if ($i -eq 0) { 'w' } else { 'a' }
     Invoke-ReplicaCommand "python -c open('$stage','$mode').write('$chunk')"
   }
+  # The staged file is not secret and the next run overwrites it; skipping cleanup
+  # saves an exec session (exec is rate-limited per app).
   Invoke-ReplicaCommand ("python -c exec({0})" -f $decode.Replace('PAYLOAD', "open('$stage').read()"))
-  Invoke-ReplicaCommand "python -c __import__('os').remove('$stage')"
 }
 
 function Invoke-Spike {
@@ -172,10 +176,9 @@ import os, socket
 ip = socket.gethostbyname(os.environ['REDIS_HOST'])
 print(('PASS' if ip.startswith('$PrivateEndpointPrefix') else 'FAIL') + ': REDIS_HOST resolves into ' + '.'.join(ip.split('.')[:3]) + '.0/27 range')
 "@
-  Write-Step 'Spike: private DNS check'
-  Invoke-InReplica $dns
-  Write-Step 'Spike: Test-PopeyeRedisCompat.py'
-  Invoke-InReplica (Get-Content -Raw $spikeScript)
+  # One payload for the DNS check and the spike keeps this to three exec sessions.
+  Write-Step 'Spike: private DNS check + Test-PopeyeRedisCompat.py'
+  Invoke-InReplica ($dns + "`n" + (Get-Content -Raw $spikeScript))
   Write-Host "`nAll rows above must be PASS. On MOVED/CROSSSLOT/ResponseError set redis_clustering_policy = `"EnterpriseCluster`" in terraform.tfvars and rerun PlanA, ApplyA, Spike." -ForegroundColor Yellow
   Confirm-Yes 'Did every spike row PASS?'
 }
