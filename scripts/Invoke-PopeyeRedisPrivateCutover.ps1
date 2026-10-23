@@ -49,7 +49,8 @@ param(
   [string] $TerraformDir = 'envs/azure-eastus2',
   [string] $PrivateEndpointPrefix = '10.60.3.',
   [int] $MinReplicas = 2,
-  [int] $ReplicaWaitSeconds = 600
+  [int] $ReplicaWaitSeconds = 600,
+  [int] $ChunkSize = 900
 )
 
 Set-StrictMode -Version Latest
@@ -135,11 +136,34 @@ function Wait-Replicas([string] $Revision) {
   throw "REQ-GW-06: fewer than $MinReplicas Running replicas on $Revision after $ReplicaWaitSeconds s."
 }
 
+function Invoke-ReplicaCommand([string] $Command) {
+  & az containerapp exec -n $ContainerAppName -g $ResourceGroupName --command $Command
+}
+
 function Invoke-InReplica([string] $PythonCode) {
-  # exec splits its command on spaces and uses no shell, so ship the code base64-encoded.
-  $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($PythonCode))
-  $cmd = "python -c exec(__import__('base64').b64decode('$b64'))"
-  & az containerapp exec -n $ContainerAppName -g $ResourceGroupName --command $cmd
+  # exec splits its command on spaces and uses no shell, and the command travels in
+  # the URL (IIS answers 404 past ~2 KB), so ship zlib+base64 and stage long payloads
+  # in /tmp in chunks.
+  $raw = [Text.Encoding]::UTF8.GetBytes($PythonCode)
+  $buffer = [IO.MemoryStream]::new()
+  $zlib = [IO.Compression.ZLibStream]::new($buffer, [IO.Compression.CompressionLevel]::SmallestSize)
+  $zlib.Write($raw, 0, $raw.Length)
+  $zlib.Dispose()
+  $b64 = [Convert]::ToBase64String($buffer.ToArray())
+  $decode = "__import__('zlib').decompress(__import__('base64').b64decode(PAYLOAD))"
+
+  if ($b64.Length -le $ChunkSize) {
+    Invoke-ReplicaCommand ("python -c exec({0})" -f $decode.Replace('PAYLOAD', "'$b64'"))
+    return
+  }
+  $stage = '/tmp/popeye-spike.b64'
+  for ($i = 0; $i -lt $b64.Length; $i += $ChunkSize) {
+    $chunk = $b64.Substring($i, [Math]::Min($ChunkSize, $b64.Length - $i))
+    $mode = if ($i -eq 0) { 'w' } else { 'a' }
+    Invoke-ReplicaCommand "python -c open('$stage','$mode').write('$chunk')"
+  }
+  Invoke-ReplicaCommand ("python -c exec({0})" -f $decode.Replace('PAYLOAD', "open('$stage').read()"))
+  Invoke-ReplicaCommand "python -c __import__('os').remove('$stage')"
 }
 
 function Invoke-Spike {
