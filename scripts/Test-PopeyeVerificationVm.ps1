@@ -77,7 +77,8 @@ function Test-NameAndPort {
     $resolution = @(Resolve-DnsName -Name $Name -Type A -ErrorAction Stop)
     $addresses = @(
       $resolution |
-        Where-Object { -not [string]::IsNullOrWhiteSpace($_.IPAddress) } |
+        # CNAME records in the answer have no IPAddress property (strict mode throws).
+        Where-Object { $_.PSObject.Properties['IPAddress'] -and -not [string]::IsNullOrWhiteSpace($_.IPAddress) } |
         ForEach-Object { [System.Net.IPAddress]::Parse($_.IPAddress) }
     )
     $privateAddresses = @($addresses | Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and (Test-Rfc1918Address $_) })
@@ -157,7 +158,8 @@ if (-not [string]::IsNullOrWhiteSpace($PsqlDsn)) {
   }
 }
 
-$results | Format-Table -AutoSize
+# Run-command captures a narrow console; wrap so details are not truncated.
+$results | Format-Table -AutoSize -Wrap | Out-String -Width 200
 
 if (@($results | Where-Object Status -eq "FAIL").Count -gt 0) {
   exit 1
