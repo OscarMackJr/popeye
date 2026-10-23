@@ -14,6 +14,15 @@ locals {
   # Public model names rendered here must correspond to reviewed entries in
   # config/model-approval-registry.example.yaml. Key allowlists are derived
   # from that registry; this YAML remains provider routing config only.
+  # Why each hardening key exists:
+  # - user_api_key_cache_ttl 30: a blocked key stops working within 30 s (GW-05).
+  # - allow_client_side_credentials false: clients cannot bring provider creds.
+  # - disable_env_credential_login true: master key is not a UI password (D-19).
+  # - coordination_redis: explicit, so a bad Redis config fails loudly instead
+  #   of silently falling back to per-pod counters (GW-06, Pitfall 4). Port is
+  #   rendered from Terraform, avoiding env-string coercion.
+  # - store_prompts_in_spend_logs false: no prompt bodies in the ledger.
+  # - NO cache / cache_params: response caching is intentionally absent.
   litellm_config_yaml = <<-EOT
 model_list:
   - model_name: twg-foundry
@@ -36,6 +45,14 @@ litellm_settings:
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
+  user_api_key_cache_ttl: 30
+  allow_client_side_credentials: false
+  disable_env_credential_login: true
+  coordination_redis:
+    host: os.environ/REDIS_HOST
+    port: ${module.state.redis_ssl_port}
+    password: os.environ/REDIS_PASSWORD
+    ssl: true
 EOT
 }
 
@@ -281,6 +298,7 @@ module "service" {
   resource_group_name        = azurerm_resource_group.gateway.name
   location                   = var.location
   litellm_image_tag          = var.litellm_image_tag
+  litellm_image_digest       = var.litellm_image_digest
   infrastructure_subnet_id   = azurerm_subnet.containerapps.id
   log_analytics_workspace_id = module.observability.log_analytics_workspace_id
   key_vault_id               = azurerm_key_vault.gateway.id

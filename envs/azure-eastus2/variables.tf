@@ -10,8 +10,18 @@ variable "location" {
 }
 
 variable "litellm_image_tag" {
-  description = "Pinned LiteLLM -stable tag. No default on purpose."
+  description = "Pinned LiteLLM tag, plain vX.Y.Z. Never latest, never the affected 1.91.0-1.100.3 range. No default on purpose; set in litellm-pin.auto.tfvars."
   type        = string
+}
+
+variable "litellm_image_digest" {
+  description = "OCI digest (sha256:<64 hex>) of the pinned LiteLLM image. No default on purpose; set in litellm-pin.auto.tfvars."
+  type        = string
+
+  validation {
+    condition     = can(regex("^sha256:[0-9a-f]{64}$", var.litellm_image_digest))
+    error_message = "litellm_image_digest must match ^sha256:[0-9a-f]{64}$."
+  }
 }
 
 variable "vnet_cidr" {
