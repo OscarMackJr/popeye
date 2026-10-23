@@ -9,7 +9,7 @@ progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 9
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-10-23 - 01-04 Redis private cutover complete (GW-06)
+Last activity: 2026-10-23 - 01-05 reader DSN applied; NET-03 blocked on networking env DNS zone
 
-Progress: [████░░░░░░] 44%
+Progress: [██████░░░░] 56%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Recent decisions affecting current work:
 - [Roadmap]: NET-07 (temporary access review) is placed in Phase 8 because the peered caller VM is also the runner for the smoke test, the Stage 1 measurements and the DLP evaluation.
 - [2026-10-22]: Network design is peering. Callers in `EUS-POPEYE-VNET-01` reach the Stage 1/2 VNet over VNet peering, replacing the proposal for a VM and Bastion inside the Stage 1/2 VNet.
 - [Roadmap]: Phases needing `--research-phase`: 1, 3 (highest), 4 (FQDN routing), 5, 6, 8 (DLP).
+- [Phase 01]: 01-05: networking-owns branch; litellm-reader-dsn applied 2026-10-23; env DNS Terraform count-gated off
 - [Phase 01]: 01-04: Redis clustering policy stays NoCluster (spike all PASS over the private endpoint); Redis publicNetworkAccess Disabled 2026-10-23
 - [Phase 01]: Phase 01-02: env DNS zone owned by networking; D-08 extended to database-url/reader-dsn (user-approved); VM tooling via Install-PopeyeVmTooling.ps1 before plan 08
 

@@ -1,36 +1,53 @@
 ---
 phase: 01-network-proof-gateway-hardening-smoke-row
 plan: 05
-status: in-progress at Task 3 checkpoint
-requirements: [NET-03, MVP-01]
+subsystem: networking, key-vault
+tags: [terraform, private-dns, key-vault, net-03, mvp-01]
+requires: [01-02, 01-04]
+provides:
+  - Count-gated env private DNS zone Terraform (manage_env_dns_zone, default false)
+  - default_domain / static_ip module outputs; env_default_domain / env_static_ip root outputs
+  - litellm-reader-dsn Key Vault secret (ekg_cube_reader password, role created by SQL in plan 08)
+affects: [01-08 admin ceremony, 01-09 network evidence]
 key-files:
   modified:
     - modules/gateway-service-azure/outputs.tf
     - envs/azure-eastus2/variables.tf
     - envs/azure-eastus2/main.tf
     - envs/azure-eastus2/outputs.tf
+    - scripts/Test-PopeyeVerificationVm.ps1
+    - scripts/Test-PopeyeGatewayLockdown.ps1
+    - artifacts/popeye-phase1-preflight-2026-10-22.md
+decisions:
+  - "networking-owns branch taken: Popeye applied defaults only; env DNS zone left to networking (D-14, D-17)"
+metrics:
+  tasks: 3
+  files: 7
+completed: 2026-10-23
 ---
 
-# Phase 01 Plan 05: Env DNS Terraform and Reader DSN Secret (partial)
+# Phase 1 Plan 05: Env DNS Terraform and reader DSN secret Summary
 
-Status: Tasks 1 and 2 done and committed; Task 3 (operator apply and verification) pending.
+The env DNS Terraform is ready but turned off (`manage_env_dns_zone = false`), because networking owns the zone. Its name and IP come from the new module outputs. The `litellm-reader-dsn` secret is in the gateway Key Vault (applied 2026-10-23, confirmed by name only), and `terraform plan -detailed-exitcode` exits 0. From the peered caller VM, Postgres resolves privately and TCP 5432 connects. The gateway FQDN does not resolve yet, so NET-03 is recorded as blocked on networking in `artifacts/popeye-phase1-preflight-2026-10-22.md`. Plan 09 hard-gates on it.
 
-## Completed
+## Commits
+- 071e489: module outputs and root variables for env DNS
+- 3bf47fc: conditional env DNS zone and ledger reader DSN secret
+- e828291: allow an empty results list in verification check helpers
+- dfa8db9: skip CNAME records in the VM DNS check and stop truncating details
 
-- Task 1 (071e489): module outputs `default_domain` and `static_ip`; root variables `manage_env_dns_zone` (default false) and `caller_vnet_id` (validated, default empty).
-- Task 2 (3bf47fc): count-gated env private DNS zone, `*` and `@` A records, stage link and optional caller link (registration disabled, names from module outputs); `random_password.ekg_cube_reader` and Key Vault secret `litellm-reader-dsn`; root outputs `env_default_domain` and `env_static_ip`.
+## Deviations from Plan
 
-## Verification run locally
+### [Rule 1 - Bug] Verification helpers rejected an empty results list
+`Add-Result` and `Test-NameAndPort` declared `$Results` as Mandatory without `[AllowEmptyCollection()]`. The first call threw before any check ran. The same pattern was in `Test-PopeyeGatewayLockdown.ps1` (used in plan 08), and both are fixed.
 
-- `terraform fmt -check -recursive`: pass.
-- `terraform init -backend=false` and `validate`: pass.
-- `terraform plan` was NOT run (no backend or Azure auth by design). The default-vars plan expectation (only the reader password and secret added) is for the operator to confirm.
-- No `ashyglacier` or `10.60.0.108` in main.tf. Salt key block, image tag and Redis resources untouched.
+### [Rule 1 - Bug] Postgres DNS reported FAIL while resolution worked
+`Resolve-DnsName` returns the privatelink CNAME hop, which has no `IPAddress` property, and strict mode threw on it. The script now skips records without that property. The result table now wraps at width 200 so run-command output is not truncated.
 
-## Deviations
+### Windows az.cmd quoting
+`--query` strings containing `(`, `,`, `'`, `?` or `==` are mangled by the `az.cmd` wrapper in PowerShell. In the operator steps, filtering is done in PowerShell instead.
 
-None.
+## Known Stubs
+None. The DNS zone resources are intentionally count-gated off.
 
-## Pending: Task 3 (operator)
-
-Preflight decision is `env-dns-owner: networking-owns`: apply with defaults (adds only the reader password and secret), confirm `litellm-reader-dsn` via `az keyvault secret list` names only, run the DNS check via run-command, and record `env-dns-branch-taken:` and `env-dns-resolution:` (likely `blocked-on-networking` until the zone exists) in the preflight file. Then `terraform plan -detailed-exitcode` must exit 0.
+## Self-Check: PASSED (reader secret present, no drift; NET-03 blocked-on-networking recorded)
