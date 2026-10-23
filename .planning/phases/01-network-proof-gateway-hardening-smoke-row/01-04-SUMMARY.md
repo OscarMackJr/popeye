@@ -33,10 +33,10 @@ completed: 2026-10-23
 Managed Redis is reachable only through its private endpoint, and public network access is Disabled. The cutover took two separate applies with a NoCluster compatibility spike between them. After stage B the gateway passed the health checks: at least 2 replicas Running, readiness from inside a replica, clean console logs, a spike rerun and no Terraform drift. Evidence: `artifacts/popeye-redis-spike-2026-10-22.md`.
 
 ## Commits
-- 0bad57c: Redis private endpoint, clustering policy variable, compat spike script
-- 6d115f6: operator script for the cutover (stage A, spike, stage B, health)
-- 480ec1b: chunk in-replica payloads under the exec URL limit
-- f8495f1: cut the spike to three exec sessions and stop on exec failure
+- b3cea0d: Redis private endpoint, clustering policy variable, compat spike script
+- 772070a: operator script for the cutover (stage A, spike, stage B, health)
+- 173ef30: chunk in-replica payloads under the exec URL limit
+- b0ff4eb: cut the spike to three exec sessions and stop on exec failure
 
 ## Deviations from Plan
 
