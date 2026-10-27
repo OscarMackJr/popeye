@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-10-23 - 01-07 gateway upgraded to LiteLLM v1.106.2 (revision --0000005)
+Last activity: 2026-10-27 - Completed quick task 261027-j3d: VM egress probe (all six destinations TCP 443 timeout)
 
 Progress: [████████░░] 78%
 
@@ -77,6 +77,7 @@ None yet.
 ### Blockers/Concerns
 
 - Plan 01-08 HELD (2026-10-23). EUS-VM-POPEYE has no outbound internet: the psql/az install failed, and operator `az login` on the VM also needs Entra/ARM/Key Vault egress. The env DNS zone (NET-03) is also still pending. Both are networking asks. The D-08 database-url grant extension is already approved (2026-10-22).
+  - 2026-10-27: `scripts/Test-PopeyeVmEgress.ps1` shows all six destinations resolve but time out on TCP 443 (dropped on the Azure path). Results go back to networking. Networking is creating the env DNS zone and has removed `Allow_Iliya_Promenet`; NET-06 User Login is unconfirmed. Re-run the probe after their egress change.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
@@ -98,6 +99,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 261023-d0i | Close out plan 01-04 Redis private cutover with operator evidence | 2026-10-23 | docs(quick-261023-d0i) | [261023-d0i-close-out-plan-01-04-redis-private-cutov](./quick/261023-d0i-close-out-plan-01-04-redis-private-cutov/) |
+| 261027-j3d | Record 2026-10-27 VM egress probe and add Test-PopeyeVmEgress.ps1 | 2026-10-27 | docs(quick-261027-j3d) | [261027-j3d-record-2026-10-27-vm-egress-probe-and-ad](./quick/261027-j3d-record-2026-10-27-vm-egress-probe-and-ad/) |
 
 ## Deferred Items
 

@@ -61,3 +61,26 @@ az-on-vm: no
   - HTTPS egress for the installers (`aka.ms` / `azcliprod.blob.core.windows.net`, `get.enterprisedb.com`) and for operator `az login` (`login.microsoftonline.com`, `management.azure.com`, `*.vault.azure.net`); or
   - an approved way to place the installers on the VM, plus the Azure endpoints above.
 - The env DNS zone (NET-03) is also still pending. Plan 08 needs the gateway FQDN to resolve from the VM.
+
+## Egress probe (2026-10-27)
+
+psql-on-vm: no
+az-on-vm: no
+vm-egress-443: blocked (all six destinations, TCP timeout)
+
+- `scripts/Test-PopeyeVmEgress.ps1` via run-command on EUS-VM-POPEYE, 2026-10-27. Output reported `ROWS=7 (expect 7)`, and the positive control passed (Postgres private endpoint resolves into the Postgres subnet, TCP 5432 OK over the peering), so the probe read real results.
+- Results:
+
+  | Destination | DNS | TCP 443 | HTTPS |
+  |---|---|---|---|
+  | login.microsoftonline.com | resolves (public) | TIMEOUT | not reached |
+  | management.azure.com | resolves (public) | TIMEOUT | not reached |
+  | gateway Key Vault (`*.vault.azure.net`) | resolves (public) | TIMEOUT | not reached |
+  | aka.ms | resolves (public) | TIMEOUT | not reached |
+  | azcliprod.blob.core.windows.net | resolves (public) | TIMEOUT | not reached |
+  | get.enterprisedb.com | resolves (public) | TIMEOUT | not reached |
+
+- Reading: DNS works and every TCP connect on 443 times out, so traffic is dropped on the Azure network path (NSG outbound rule, a route to a firewall/NVA, or no outbound path for the subnet). It is not DNS and not TLS inspection.
+- The gateway Key Vault accepts public network access (no `network_acls` in `envs/azure-eastus2/main.tf`), so `*.vault.azure.net` needs only the egress path.
+- Results go back to networking (2026-10-27) with a request to check the VM NIC's effective security rules and effective routes. Networking also confirmed the env private DNS zone plan (`*` and `@` → environment staticIp, linked to both VNets, auto-registration off) and that the NSG cleanup (`Allow_Iliya_Promenet`) is done. User Login for both operators (NET-06) is not yet confirmed.
+- Plan 08 stays held. Re-run this probe once networking reports the egress change; every destination should show TCP OK and an HTTPS status.
