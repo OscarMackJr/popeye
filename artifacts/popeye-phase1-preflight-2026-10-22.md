@@ -84,3 +84,23 @@ vm-egress-443: blocked (all six destinations, TCP timeout)
 - The gateway Key Vault accepts public network access (no `network_acls` in `envs/azure-eastus2/main.tf`), so `*.vault.azure.net` needs only the egress path.
 - Results go back to networking (2026-10-27) with a request to check the VM NIC's effective security rules and effective routes. Networking also confirmed the env private DNS zone plan (`*` and `@` → environment staticIp, linked to both VNets, auto-registration off) and that the NSG cleanup (`Allow_Iliya_Promenet`) is done. User Login for both operators (NET-06) is not yet confirmed.
 - Plan 08 stays held. Re-run this probe once networking reports the egress change; every destination should show TCP OK and an HTTPS status.
+
+## Networking follow-up (2026-11-03)
+
+vm-egress-443: blocked (no outbound path on the VM subnet)
+
+- Networking asked where the traffic comes from. Reply sent 2026-11-03: the traffic starts on EUS-VM-POPEYE itself (no public IP, subnet 10.10.2.0/24), not from a workstation or from on-prem. Run-command executes in the VM guest OS, so the 2026-10-27 probe connections came from the VM's NIC. The Postgres positive control took the same path over the peering. The ceremony's interactive Bastion session (EUS-POPEY-BASTION) also starts traffic on the VM; Bastion only carries the session.
+- The reply asks for an outbound path for the VM on TCP 443 (NAT gateway, firewall/NVA route with allow rules, or LB outbound rule):
+
+  | Destination | Purpose | Need |
+  |---|---|---|
+  | login.microsoftonline.com | operator `az login` | ongoing |
+  | management.azure.com | Azure CLI / ARM | ongoing |
+  | `*.vault.azure.net` | Key Vault | ongoing |
+  | aka.ms | Azure CLI installer (redirects to the next row) | one-time |
+  | azcliprod.blob.core.windows.net | Azure CLI installer download | one-time |
+  | get.enterprisedb.com | PostgreSQL client installer | one-time |
+
+- The reply also asks again for NET-06 confirmation (User Login for both approved operators).
+- Subnet read from the workstation (`az network vnet subnet show`, `az network nsg rule list`), 2026-11-03: `defaultOutboundAccess` is false (private subnet), there is no NAT gateway or route table on the subnet, and the subnet NSG has no custom rules. The subnet has no outbound internet path at all, which matches the TCP 443 timeouts. The fix is networking's: attach a NAT gateway, or a route table to a firewall/NVA with allow rules for the destinations above.
+- Plan 08 stays held. Re-run `scripts/Test-PopeyeVmEgress.ps1` after networking reports the change.
