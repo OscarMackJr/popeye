@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-11-03 - Completed quick task 261103-k7m: recorded networking reply (VM subnet has no outbound path)
+Last activity: 2026-11-03 - Completed quick task 261103-m4q: recorded networking egress design response and temporary-egress request
 
 Progress: [████████░░] 78%
 
@@ -79,6 +79,7 @@ None yet.
 - Plan 01-08 HELD (2026-10-23). EUS-VM-POPEYE has no outbound internet: the psql/az install failed, and operator `az login` on the VM also needs Entra/ARM/Key Vault egress. The env DNS zone (NET-03) is also still pending. Both are networking asks. The D-08 database-url grant extension is already approved (2026-10-22).
   - 2026-10-27: `scripts/Test-PopeyeVmEgress.ps1` shows all six destinations resolve but time out on TCP 443 (dropped on the Azure path). Results go back to networking. Networking is creating the env DNS zone and has removed `Allow_Iliya_Promenet`; NET-06 User Login is unconfirmed. Re-run the probe after their egress change.
   - 2026-11-03: Networking asked where the traffic comes from. Reply: from EUS-VM-POPEYE itself (subnet 10.10.2.0/24), with the destination list and the NET-06 question repeated. The subnet read shows `defaultOutboundAccess` false with no NAT gateway or route table, so it has no outbound path. Networking needs to add one.
+  - 2026-11-03 (later): Networking says no egress is by design. Security rejected a public IP, and no central firewall exists yet. They offered an approved temporary method. We requested a time-boxed NAT gateway with NSG outbound limited to the AzureActiveDirectory/AzureResourceManager/AzureKeyVault service tags, plus an installer option (install window, staged installers, or a Bastion Basic to Standard upgrade), and asked for the central firewall's date. NET-06 is pending their check.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
@@ -102,6 +103,7 @@ None yet.
 | 261023-d0i | Close out plan 01-04 Redis private cutover with operator evidence | 2026-10-23 | docs(quick-261023-d0i) | [261023-d0i-close-out-plan-01-04-redis-private-cutov](./quick/261023-d0i-close-out-plan-01-04-redis-private-cutov/) |
 | 261027-j3d | Record 2026-10-27 VM egress probe and add Test-PopeyeVmEgress.ps1 | 2026-10-27 | docs(quick-261027-j3d) | [261027-j3d-record-2026-10-27-vm-egress-probe-and-ad](./quick/261027-j3d-record-2026-10-27-vm-egress-probe-and-ad/) |
 | 261103-k7m | Record 2026-11-03 networking reply (VM egress source) in the preflight artifact | 2026-11-03 | docs(quick-261103-k7m) | [261103-k7m-record-2026-11-03-networking-reply-vm-egre](./quick/261103-k7m-record-2026-11-03-networking-reply-vm-egre/) |
+| 261103-m4q | Record networking's egress design response and the temporary-egress follow-up | 2026-11-03 | docs(quick-261103-m4q) | [261103-m4q-record-networking-egress-design-response](./quick/261103-m4q-record-networking-egress-design-response/) |
 
 ## Deferred Items
 

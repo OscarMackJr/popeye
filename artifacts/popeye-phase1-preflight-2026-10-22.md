@@ -104,3 +104,18 @@ vm-egress-443: blocked (no outbound path on the VM subnet)
 - The reply also asks again for NET-06 confirmation (User Login for both approved operators).
 - Subnet read from the workstation (`az network vnet subnet show`, `az network nsg rule list`), 2026-11-03: `defaultOutboundAccess` is false (private subnet), there is no NAT gateway or route table on the subnet, and the subnet NSG has no custom rules. The subnet has no outbound internet path at all, which matches the TCP 443 timeouts. The fix is networking's: attach a NAT gateway, or a route table to a firewall/NVA with allow rules for the destinations above.
 - Plan 08 stays held. Re-run `scripts/Test-PopeyeVmEgress.ps1` after networking reports the change.
+
+## Networking response on egress design (2026-11-03)
+
+vm-egress-443: blocked (by design, pending approved egress)
+
+- Networking's position: no egress is the agreed design. EUS-VM-POPEYE has no public IP per security requirements, and security rejected assigning one. No centralized firewall/NVA or other approved outbound path exists for the subnet yet. They confirmed the probe reading: DNS works, private Postgres over the peering works, and outbound TCP 443 to public/Azure endpoints is unavailable. It is not a DNS issue.
+- Once the central egress solution exists, networking will allow login.microsoftonline.com, management.azure.com and `*.vault.azure.net`, plus aka.ms, azcliprod.blob.core.windows.net and get.enterprisedb.com temporarily for installs.
+- If access is needed sooner, networking offered to coordinate with security on an approved temporary egress method that keeps the private-access model.
+- The NSG cleanup is confirmed done. Networking will check the VM User Login assignments separately (NET-06 still unconfirmed).
+- Follow-up sent (2026-11-03): access is needed before the permanent firewall because it blocks the plan 08 ceremony. It asks for the temporary method, proposed as:
+  1. A time-boxed NAT gateway on the VM subnet. There is no public IP on the VM and no inbound path. The subnet NSG allows outbound 443 only to the `AzureActiveDirectory`, `AzureResourceManager` and `AzureKeyVault` service tags and denies other internet traffic. It is removed once the central firewall is in place.
+  2. For the one-time installers (no service tags exist for them), whichever security prefers: a short scheduled window allowing general internet access, closed afterwards; networking or security places the installers on the VM; or upgrading EUS-POPEY-BASTION to Standard for file upload.
+  It also asks for a rough date for the central firewall.
+- EUS-POPEY-BASTION is Basic SKU (read 2026-11-03), so Bastion file transfer is not available today.
+- Plan 08 stays held. Re-run `scripts/Test-PopeyeVmEgress.ps1` once an egress path is in place. With the service-tag-only NSG, the three Azure destinations should show TCP OK. The installer destinations stay blocked unless the install window is open.
