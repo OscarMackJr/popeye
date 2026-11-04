@@ -174,3 +174,12 @@ net-06: pending program decision (Vinay)
 - Outbound HTTPS: networking recommends keeping the current 443-to-Internet rule through the ceremony, subject to Security's approval. Destination-based restriction (AzureActiveDirectory, AzureResourceManager, AzureKeyVault) will be revisited with the central firewall.
 - Ownership: networking recommends Promenet keep managing the shared networking (VNet peering, private DNS, NSG policy) and offered to agree ownership boundaries with Popeye's Terraform. The Postgres private DNS integration is unchanged.
 - Plan 08: the network and tooling gates are met. Remaining before the ceremony: Vinay's NET-06 decision (or explicit agreement that Oscar runs the ceremony alone with Admin Login and NET-06 is recorded as such), and Security's view on the temporary outbound rule.
+
+## NET-06 decision (2026-11-04)
+
+net-06: approved (Vinay), pending networking RBAC change
+
+- Operator change: Oleg replaces Roger as the second approved operator for EUS-VM-POPEYE.
+- Vinay's decision (2026-11-04): it is fine for Oleg and Oscar to have access to the VM as non-admins. This supersedes the original instruction restricting the VM to Oscar.
+- Requested from networking: move Oscar from Virtual Machine Administrator Login to Virtual Machine User Login, and grant Oleg Virtual Machine User Login plus the narrow-scope Reader needed to connect through Bastion. No other principals.
+- Verify after the change with `scripts/Test-PopeyeAzureVerificationVm.ps1 -ApprovedOperatorDisplayNames 'Oscar Mack','<Oleg display name>'`.

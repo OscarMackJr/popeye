@@ -20,7 +20,7 @@
 .EXAMPLE
   .\scripts\Test-PopeyeAzureVerificationVm.ps1 -VmName EUS-VM-POPEYE `
     -CallerResourceGroupName <caller rg> -VmResourceGroupName <vm rg> `
-    -ApprovedOperatorDisplayNames 'Oscar Mack','Roger'
+    -ApprovedOperatorDisplayNames 'Oscar Mack','Oleg'
 #>
 [CmdletBinding()]
 param(

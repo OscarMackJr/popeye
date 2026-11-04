@@ -26,7 +26,7 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
   - Entra sign-in enabled.
 
   Evidence is recorded.
-- [x] **NET-06**: VM login on `EUS-VM-POPEYE` is limited to the two approved operators with Virtual Machine User Login. Administrator Login is used only with written approval, and Roger's access is granted.
+- [x] **NET-06**: VM login on `EUS-VM-POPEYE` is limited to the two approved operators with Virtual Machine User Login. Administrator Login is used only with written approval, and Oleg's access is granted (Oleg replaced Roger as the second operator, 2026-11-04).
 - [ ] **NET-07**: Temporary verification access is reviewed on an agreed date and removed or renewed with a record: login roles, temporary NSG rules, and the VM if it is dedicated to Popeye.
 
 ### Gateway Upgrade & Hardening (GW)

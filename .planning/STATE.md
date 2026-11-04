@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-11-04 - Completed quick task 261104-t5w: NET-03 done; gateway FQDN reachable from EUS-VM-POPEYE; NET-06 awaits Vinay
+Last activity: 2026-11-04 - Completed quick task 261104-w3h: Vinay approved non-admin VM access for Oscar and Oleg (Oleg replaces Roger)
 
 Progress: [████████░░] 78%
 
@@ -83,6 +83,7 @@ None yet.
   - 2026-11-04: Egress is open: a NAT gateway, with NSG Internet outbound limited to TCP 443 (broader than the service-tag proposal). Our probe confirms it, with aka.ms HTTPS FAIL as a PS 5.1 probe quirk. az 2.92.0 and psql 16.4 are installed on the VM (psql needed the VC++ runtime), so psql-on-vm and az-on-vm are yes. Postgres now resolves to 10.60.2.4, not 10.60.2.5 (Flexible Server IP move; FQDN-based, no impact). Plan 01-08 is still held on NET-03 and NET-06.
   - 2026-11-04 (later): Follow-up sent to networking asking for NET-03 (env DNS zone) status, NET-06 (User Login) confirmation, and offering to narrow the Internet-wide HTTPS rule to the three Azure service tags (their call). Awaiting reply.
   - 2026-11-04 (reply): NET-03 is done: networking created the env DNS zone. Gateway FQDN → 10.60.0.108 and TCP 443 PASS from the VM (run-command preview, `Test-PopeyeVerificationVm.ps1`). NET-06 is held for Vinay: only Oscar has VM Admin Login (original instruction), and Oscar to User Login plus Roger User Login/Reader needs his confirmation. Networking recommends keeping 443-anywhere through the ceremony (Security to approve) and Promenet owning shared networking. Plan 01-08 gates now: the NET-06 decision and Security's view on outbound.
+  - 2026-11-04 (Vinay): approved Oscar and Oleg on the VM as non-admins. Oleg replaces Roger as the second operator. The NET-06 RBAC change has been requested from networking.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
@@ -94,7 +95,7 @@ None yet.
   - a Container Apps environment private DNS zone (`ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` → 10.60.0.108), linked to both VNets; without it the gateway FQDN does not resolve and the smoke test is blocked;
   - removing the internet-sourced RDP rule `Allow_Iliya_Promenet`;
   - User Login for both approved operators.
-- `EUS-VM-POPEYE` login: the extra assignments were removed (2026-10-22). Only OMack remains, with Administrator Login. Roger needs User Login, and OMack should drop to User Login or record approval for Admin (NET-06).
+- `EUS-VM-POPEYE` login (NET-06): 2026-11-04, Vinay approved non-admin access for Oscar and Oleg (Oleg replaced Roger). Networking still has to move Oscar from Administrator Login to User Login and grant Oleg User Login plus Reader.
 - Program/nono decisions needed early in Phase 2: G11 (`on_behalf_of` format, one-way door), G2 (budget model, before any fleet mint), the `direct_gateway` default, and the G3 admin-revocation carve-out (OPS-03 depends on it).
 - Hook internals are LOW confidence until the Phase 3 spike, which gates the Phase 5 metadata contract.
 - The 60s revocation bound may be read as end-to-end (about 120s worst case). Clarify with nono, hometown and olive before Phase 6.
@@ -110,6 +111,7 @@ None yet.
 | 261104-p2v | Record VM egress opened and tooling installed; fix tooling scripts for run-command | 2026-11-04 | docs(quick-261104-p2v) | [261104-p2v-record-vm-egress-open-and-tooling-install](./quick/261104-p2v-record-vm-egress-open-and-tooling-install/) |
 | 261104-r8n | Record the 2026-11-04 follow-up note to networking (NET-03, NET-06, HTTPS scope) | 2026-11-04 | docs(quick-261104-r8n) | [261104-r8n-record-follow-up-note-to-networking](./quick/261104-r8n-record-follow-up-note-to-networking/) |
 | 261104-t5w | Record NET-03 done, gateway reachable from VM, NET-06 pending Vinay; fix blank run-command args | 2026-11-04 | docs(quick-261104-t5w) | [261104-t5w-record-net03-done-gateway-reachable-from-vm](./quick/261104-t5w-record-net03-done-gateway-reachable-from-vm/) |
+| 261104-w3h | Record Vinay's NET-06 approval and the Roger-to-Oleg operator change | 2026-11-04 | docs(quick-261104-w3h) | [261104-w3h-record-net06-approval-oleg-replaces-roger](./quick/261104-w3h-record-net06-approval-oleg-replaces-roger/) |
 
 ## Deferred Items
 
