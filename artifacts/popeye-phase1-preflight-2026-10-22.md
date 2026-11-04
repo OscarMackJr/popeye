@@ -119,3 +119,25 @@ vm-egress-443: blocked (by design, pending approved egress)
   It also asks for a rough date for the central firewall.
 - EUS-POPEY-BASTION is Basic SKU (read 2026-11-03), so Bastion file transfer is not available today.
 - Plan 08 stays held. Re-run `scripts/Test-PopeyeVmEgress.ps1` once an egress path is in place. With the service-tag-only NSG, the three Azure destinations should show TCP OK. The installer destinations stay blocked unless the install window is open.
+
+## Egress opened and tooling installed (2026-11-04)
+
+psql-on-vm: yes
+az-on-vm: yes
+vm-egress-443: open (NAT gateway; NSG Internet outbound TCP 443 only)
+
+- Networking's change (reported 2026-11-04): the VM stays private with no public IP. Outbound internet goes through an Azure NAT Gateway, and the NSG allows Internet-bound traffic only on TCP 443. Their tests show TCP 443 succeeding to all six destinations and TCP 80 failing to all six, with Postgres TCP 5432 over the peering still working.
+- This is broader than the 2026-11-03 proposal (service-tag-only outbound): any HTTPS destination is reachable. Whether it will be tightened after the installs, or stays until the central firewall, has not been asked yet.
+- Our re-run of `scripts/Test-PopeyeVmEgress.ps1` (run-command, 2026-11-04): `ROWS=7`, positive control PASS. TCP 443 OK to all six. HTTPS OK for login.microsoftonline.com (200), management.azure.com (400), the gateway Key Vault (405), azcliprod.blob.core.windows.net (400) and get.enterprisedb.com (403). aka.ms showed HTTPS FAIL ("Operation is not valid due to the current state of the object"). That is a Windows PowerShell 5.1 quirk with `-Method Head -MaximumRedirection 0` on a redirect, not a network fault: TCP was OK, and the Azure CLI install via aka.ms then succeeded.
+- The Postgres private IP read by networking differs from the 2026-10-22 record. That is expected for a VNet-integrated Flexible Server after failover or restart. The scripts resolve by FQDN, so nothing depends on the IP.
+- Tooling install (`scripts/Install-PopeyeVmTooling.ps1` via run-command):
+  - Azure CLI 2.92.0 installed (`az version` PASS).
+  - The psql binaries (EDB zip, 16.4-1) installed, but `psql --version` printed nothing and exited 0xC0000135 (DLL not found). The Visual C++ 2015-2022 x64 runtime was missing: Windows Server 2022 does not ship it and the EDB zip does not bundle it. A one-off install from `aka.ms/vs/17/release/vc_redist.x64.exe` (exit 0) fixed it, and `psql --version` then returned `psql (PostgreSQL) 16.4`.
+  - `-CheckTooling` first reported both tools missing. Run-command's process keeps its start-time PATH and does not see machine PATH changes.
+  - Run-command passes `X=true` as `-X true`, and for a switch the stray `true` bound positionally to the next parameter. The dry run showed "PostgreSQL client true".
+- Script fixes, the same day:
+  - `Install-PopeyeVmTooling.ps1` installs the Visual C++ runtime when vcruntime140.dll is missing, reports psql's exit code when it prints nothing, and re-reads the machine PATH before checking.
+  - `Test-PopeyeVerificationVm.ps1 -CheckTooling` re-reads the machine PATH.
+  - Both scripts use `PositionalBinding = $false` and a remaining-arguments catch that accepts only `true`.
+  - Verified on the VM: `-CheckTooling` reports PASS for psql 16.4 and az 2.92.0. An installer dry run reports az, psql and vcruntime already present.
+- Plan 08 tooling gate: met. Plan 08 stays held on NET-03 (env private DNS zone; the gateway FQDN must resolve from the VM) and NET-06 (User Login for both operators; networking is checking).

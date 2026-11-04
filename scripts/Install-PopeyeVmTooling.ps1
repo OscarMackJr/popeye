@@ -12,6 +12,9 @@
     client-only EDB binaries zip is used when winget cannot install client tools only);
     fallback is the documented EDB binaries zip for PostgreSQL 16 (pinned $PsqlVersion),
     extracted to C:\Program Files\PostgreSQL\16\bin and added to the machine PATH.
+  - Visual C++ 2015-2022 x64 runtime (https://aka.ms/vs/17/release/vc_redist.x64.exe)
+    when vcruntime140.dll is missing. The EDB zip does not bundle it and Windows Server
+    2022 does not ship it; without it psql.exe exits 0xC0000135 with no output.
   - Verifies with `psql --version` and `az version`, printing PASS/FAIL lines.
   - -DryRun only reports what would be done.
 
@@ -27,19 +30,29 @@
 
   Confirm afterwards with scripts/Test-PopeyeVerificationVm.ps1 -CheckTooling.
   Note: run-command executes as SYSTEM; PATH changes are machine-scope and are visible
-  to new sessions (open a new Bastion session after install).
+  to new sessions (open a new Bastion session after install). Run-command's own process
+  keeps the PATH it started with, so scripts re-read the machine PATH before checking.
+
+  Run-command passes `DryRun=true` as `-DryRun true`. Positional binding is off so the
+  stray `true` lands in $RunCommandArgs (and is rejected unless it is exactly that),
+  instead of silently binding to $PsqlVersion.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding = $false)]
 param(
   [switch] $DryRun,
   # Pin to match the PostgreSQL v16 server (modules/gateway-state-azure).
   [string] $PsqlVersion = "16.4-1",
-  [string] $PsqlInstallRoot = "C:\Program Files\PostgreSQL\16"
+  [string] $PsqlInstallRoot = "C:\Program Files\PostgreSQL\16",
+  [Parameter(ValueFromRemainingArguments = $true)] [string[]] $RunCommandArgs
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if (@($RunCommandArgs | Where-Object { $_ -ne "true" }).Count -gt 0) {
+  throw "REQ-NET-04: unexpected arguments: $($RunCommandArgs -join ' ')"
+}
 
 $results = [System.Collections.Generic.List[object]]::new()
 
@@ -57,6 +70,22 @@ function Update-SessionPath {
   $machine = [Environment]::GetEnvironmentVariable("Path", "Machine")
   $user = [Environment]::GetEnvironmentVariable("Path", "User")
   $env:Path = (@($machine, $user) | Where-Object { $_ }) -join ";"
+}
+
+function Test-VcRuntime {
+  return (Test-Path (Join-Path $env:SystemRoot "System32\vcruntime140.dll"))
+}
+
+function Install-VcRuntime {
+  $exe = Join-Path $env:TEMP "vc_redist.x64.exe"
+  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+  Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $exe -UseBasicParsing
+  $p = Start-Process $exe -ArgumentList "/install /quiet /norestart" -Wait -PassThru
+  Remove-Item $exe -Force -ErrorAction SilentlyContinue
+  # 1638 = a newer version is already installed.
+  if ($p.ExitCode -notin 0, 1638, 3010) {
+    throw "REQ-NET-04: Visual C++ runtime install failed with exit code $($p.ExitCode)"
+  }
 }
 
 function Install-AzureCli {
@@ -105,15 +134,20 @@ function Add-MachinePath {
   }
 }
 
+# Run-command's PATH predates earlier installs; re-read it so re-runs stay idempotent.
+Update-SessionPath
 $needAz = -not (Test-Tool "az")
 $needPsql = -not (Test-Tool "psql")
+$needVc = -not (Test-VcRuntime)
 
 if ($DryRun) {
   Add-Result "DryRun az" $true $(if ($needAz) { "would install Azure CLI via aka.ms/installazurecliwindowsx64 MSI" } else { "already present, no action" })
   Add-Result "DryRun psql" $true $(if ($needPsql) { "would install PostgreSQL client $PsqlVersion (winget, else EDB zip) into $PsqlInstallRoot and add bin to machine PATH" } else { "already present, no action" })
+  Add-Result "DryRun vcruntime" $true $(if ($needVc) { "would install Visual C++ 2015-2022 x64 runtime via aka.ms/vs/17/release/vc_redist.x64.exe" } else { "already present, no action" })
 } else {
   try {
     if ($needAz) { Install-AzureCli }
+    if ($needVc) { Install-VcRuntime }
     if ($needPsql) {
       Install-Psql
       Add-MachinePath -Dir (Join-Path $PsqlInstallRoot "bin")
@@ -130,7 +164,9 @@ if ($DryRun) {
 
   try {
     $v = (& psql --version) 2>&1 | Out-String
-    Add-Result "psql --version" ($v -match "psql") $v.Trim()
+    $code = $LASTEXITCODE
+    $detail = if ($v.Trim()) { $v.Trim() } else { "no output, exit code 0x{0:X8} (0xC0000135 = missing DLL, e.g. Visual C++ runtime)" -f $code }
+    Add-Result "psql --version" ($code -eq 0 -and $v -match "psql") $detail
   } catch { Add-Result "psql --version" $false $_.Exception.Message }
 
   try {

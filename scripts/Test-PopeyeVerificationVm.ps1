@@ -20,7 +20,9 @@
   .\scripts\Test-PopeyeVerificationVm.ps1 -PsqlDsn $dsn
 #>
 
-[CmdletBinding()]
+# Positional binding is off: run-command passes `CheckTooling=true` as `-CheckTooling true`,
+# and the stray `true` must not bind to $PostgresFqdn. It lands in $RunCommandArgs instead.
+[CmdletBinding(PositionalBinding = $false)]
 param(
   [string] $PostgresFqdn = "pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com",
   [int] $Port = 5432,
@@ -32,11 +34,16 @@ param(
   # Optional: the environment staticIp; the resolved A record must equal it.
   [string] $ExpectedGatewayIp,
   # Report only whether psql and az are on PATH (D-18 preflight).
-  [switch] $CheckTooling
+  [switch] $CheckTooling,
+  [Parameter(ValueFromRemainingArguments = $true)] [string[]] $RunCommandArgs
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if (@($RunCommandArgs | Where-Object { $_ -ne "true" }).Count -gt 0) {
+  throw "REQ-NET-04: unexpected arguments: $($RunCommandArgs -join ' ')"
+}
 
 function Test-Rfc1918Address {
   param([Parameter(Mandatory)] [System.Net.IPAddress] $Address)
@@ -105,6 +112,8 @@ $results = [System.Collections.Generic.List[object]]::new()
 
 if ($CheckTooling) {
   # D-18 preflight: report only; non-secret.
+  # Run-command's process keeps the PATH it started with; re-read the installed PATH.
+  $env:Path = (@([Environment]::GetEnvironmentVariable("Path", "Machine"), [Environment]::GetEnvironmentVariable("Path", "User")) | Where-Object { $_ }) -join ";"
   foreach ($tool in @('psql', 'az')) {
     $cmd = Get-Command $tool -ErrorAction SilentlyContinue
     if ($null -eq $cmd) {
@@ -116,7 +125,7 @@ if ($CheckTooling) {
       Add-Result -Results $results -Check "Tooling: $tool on PATH" -Passed $true -Detail $version
     }
   }
-  $results | Format-Table -AutoSize
+  $results | Format-Table -AutoSize -Wrap | Out-String -Width 200
   if (@($results | Where-Object Status -eq "FAIL").Count -gt 0) { exit 1 }
   exit 0
 }
