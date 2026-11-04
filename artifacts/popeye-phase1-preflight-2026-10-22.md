@@ -141,3 +141,12 @@ vm-egress-443: open (NAT gateway; NSG Internet outbound TCP 443 only)
   - Both scripts use `PositionalBinding = $false` and a remaining-arguments catch that accepts only `true`.
   - Verified on the VM: `-CheckTooling` reports PASS for psql 16.4 and az 2.92.0. An installer dry run reports az, psql and vcruntime already present.
 - Plan 08 tooling gate: met. Plan 08 stays held on NET-03 (env private DNS zone; the gateway FQDN must resolve from the VM) and NET-06 (User Login for both operators; networking is checking).
+
+## Follow-up to networking (2026-11-04)
+
+- Note sent 2026-11-04. It thanks networking and confirms our probe matches their results (HTTPS to all six destinations, Postgres over the peering, no public IP). It reports that the one-time Azure CLI and PostgreSQL client installs are done.
+- Asks before the ceremony:
+  1. NET-03: is the Container Apps environment private DNS zone created and linked to both VNets, with `*` and `@` records pointing to the environment staticIp? The gateway FQDN must resolve from the VM.
+  2. NET-06: User Login status for both approved operators on EUS-VM-POPEYE.
+  3. HTTPS scope: the NSG allows HTTPS to any Internet destination. With the installs done, only login.microsoftonline.com, management.azure.com and `*.vault.azure.net` are needed. The note offers narrowing to the `AzureActiveDirectory`, `AzureResourceManager` and `AzureKeyVault` service tags, and accepts the current rule until the central firewall if networking/security prefer. That is their call.
+- Plan 08 stays held on NET-03 and NET-06 pending the reply.

@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-11-04 - Completed quick task 261104-p2v: VM egress open, az 2.92.0 and psql 16.4 installed on EUS-VM-POPEYE
+Last activity: 2026-11-04 - Completed quick task 261104-r8n: recorded follow-up note to networking (NET-03, NET-06, HTTPS scope)
 
 Progress: [████████░░] 78%
 
@@ -81,6 +81,7 @@ None yet.
   - 2026-11-03: Networking asked where the traffic comes from. Reply: from EUS-VM-POPEYE itself (subnet 10.10.2.0/24), with the destination list and the NET-06 question repeated. The subnet read shows `defaultOutboundAccess` false with no NAT gateway or route table, so it has no outbound path. Networking needs to add one.
   - 2026-11-03 (later): Networking says no egress is by design. Security rejected a public IP, and no central firewall exists yet. They offered an approved temporary method. We requested a time-boxed NAT gateway with NSG outbound limited to the AzureActiveDirectory/AzureResourceManager/AzureKeyVault service tags, plus an installer option (install window, staged installers, or a Bastion Basic to Standard upgrade), and asked for the central firewall's date. NET-06 is pending their check.
   - 2026-11-04: Egress is open: a NAT gateway, with NSG Internet outbound limited to TCP 443 (broader than the service-tag proposal). Our probe confirms it, with aka.ms HTTPS FAIL as a PS 5.1 probe quirk. az 2.92.0 and psql 16.4 are installed on the VM (psql needed the VC++ runtime), so psql-on-vm and az-on-vm are yes. Postgres now resolves to 10.60.2.4, not 10.60.2.5 (Flexible Server IP move; FQDN-based, no impact). Plan 01-08 is still held on NET-03 and NET-06.
+  - 2026-11-04 (later): Follow-up sent to networking asking for NET-03 (env DNS zone) status, NET-06 (User Login) confirmation, and offering to narrow the Internet-wide HTTPS rule to the three Azure service tags (their call). Awaiting reply.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
@@ -106,6 +107,7 @@ None yet.
 | 261103-k7m | Record 2026-11-03 networking reply (VM egress source) in the preflight artifact | 2026-11-03 | docs(quick-261103-k7m) | [261103-k7m-record-2026-11-03-networking-reply-vm-egre](./quick/261103-k7m-record-2026-11-03-networking-reply-vm-egre/) |
 | 261103-m4q | Record networking's egress design response and the temporary-egress follow-up | 2026-11-03 | docs(quick-261103-m4q) | [261103-m4q-record-networking-egress-design-response](./quick/261103-m4q-record-networking-egress-design-response/) |
 | 261104-p2v | Record VM egress opened and tooling installed; fix tooling scripts for run-command | 2026-11-04 | docs(quick-261104-p2v) | [261104-p2v-record-vm-egress-open-and-tooling-install](./quick/261104-p2v-record-vm-egress-open-and-tooling-install/) |
+| 261104-r8n | Record the 2026-11-04 follow-up note to networking (NET-03, NET-06, HTTPS scope) | 2026-11-04 | docs(quick-261104-r8n) | [261104-r8n-record-follow-up-note-to-networking](./quick/261104-r8n-record-follow-up-note-to-networking/) |
 
 ## Deferred Items
 
