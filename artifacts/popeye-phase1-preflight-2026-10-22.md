@@ -150,3 +150,27 @@ vm-egress-443: open (NAT gateway; NSG Internet outbound TCP 443 only)
   2. NET-06: User Login status for both approved operators on EUS-VM-POPEYE.
   3. HTTPS scope: the NSG allows HTTPS to any Internet destination. With the installs done, only login.microsoftonline.com, management.azure.com and `*.vault.azure.net` are needed. The note offers narrowing to the `AzureActiveDirectory`, `AzureResourceManager` and `AzureKeyVault` service tags, and accepts the current rule until the central firewall if networking/security prefer. That is their call.
 - Plan 08 stays held on NET-03 and NET-06 pending the reply.
+
+## Networking update: NET-03 done, NET-06 pending decision (2026-11-04)
+
+env-dns-resolution: resolved (zone created by networking)
+gateway-from-vm: PASS (DNS and TCP 443, run-command preview)
+net-06: pending program decision (Vinay)
+
+- NET-03: networking created the Container Apps environment private DNS zone (the environment `defaultDomain`). It has `@` and `*` A records → the environment staticIp (TTL 3600) and is linked to both VNets (Stage 1/2 and EUS-POPEYE-VNET-01) with auto-registration off. The zone sits in the networking-owned VM resource group, not in Popeye's Terraform. That matches `env-dns-owner: networking-owns`. Their tests from the VM showed the domain and wildcard resolving to the staticIp and TCP 443 succeeding.
+- Our check (`scripts/Test-PopeyeVerificationVm.ps1` via run-command, with the gateway Container App FQDN from `az containerapp list` and `-ExpectedGatewayIp` set to the staticIp): all PASS.
+
+  | Check | Status |
+  |---|---|
+  | NET-04 Postgres resolves (RFC1918) | PASS |
+  | NET-04 Postgres TCP 5432 | PASS |
+  | NET-04 Gateway resolves (= staticIp) | PASS |
+  | NET-04 Gateway TCP 443 | PASS |
+  | VM has no public IP | PASS |
+
+  The gateway FQDN has the `.internal.` label under the environment domain, so the wildcard record covers it. This is a run-command preview. The NET-04 evidence of record is still the interactive Bastion session run in plan 08/09.
+- The first attempt failed on the 261104-p2v argument guard: run-command passes a blank argument when no switch is given. Fixed in both tooling scripts (blank arguments are ignored; anything other than blank or `true` is still rejected).
+- NET-06: networking reviewed the VM RBAC. Only Oscar is assigned, with Virtual Machine Administrator Login at VM scope, per Vinay's original instruction to restrict the VM to Oscar. Before changing anything (Oscar to User Login; Roger to User Login and Reader), networking wants Vinay to confirm the revised access supersedes that restriction. No change made yet.
+- Outbound HTTPS: networking recommends keeping the current 443-to-Internet rule through the ceremony, subject to Security's approval. Destination-based restriction (AzureActiveDirectory, AzureResourceManager, AzureKeyVault) will be revisited with the central firewall.
+- Ownership: networking recommends Promenet keep managing the shared networking (VNet peering, private DNS, NSG policy) and offered to agree ownership boundaries with Popeye's Terraform. The Postgres private DNS integration is unchanged.
+- Plan 08: the network and tooling gates are met. Remaining before the ceremony: Vinay's NET-06 decision (or explicit agreement that Oscar runs the ceremony alone with Admin Login and NET-06 is recorded as such), and Security's view on the temporary outbound rule.

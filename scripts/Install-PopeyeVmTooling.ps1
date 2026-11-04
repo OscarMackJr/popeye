@@ -50,7 +50,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-if (@($RunCommandArgs | Where-Object { $_ -ne "true" }).Count -gt 0) {
+if (@($RunCommandArgs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and $_ -ne "true" }).Count -gt 0) {
   throw "REQ-NET-04: unexpected arguments: $($RunCommandArgs -join ' ')"
 }
 
