@@ -12,6 +12,16 @@ previous image reference: ghcr.io/berriai/litellm:v1.90.3 (running revision, pul
 - `scripts/Test-LitellmAdvisoryRange.py` exits 0.
 - The local `terraform.tfvars` no longer sets `litellm_image_tag`, so the pin file is the single source of truth.
 
+## Patch re-pin 1.106.2 → 1.106.7 (2026-11-08)
+
+Why: Wiz scan of 2026-11-08 reported 116 findings on the running `v1.106.2` image. They include CVE-2026-111497 (CISA KEV) in `libbrotli*` 1.2.0-r6, and Python 3.13.16, glibc 2.44-r6, certifi, pypdf, pyasn1 and tornado. Separately, GHSA-w4c7-34wj-hqm8 (critical, published 2026-10-27) affects `< 1.106.5`, and `config/litellm-advisory-ranges.json` now includes it.
+
+- Target: `v1.106.7` (published 2026-11-04), index digest `sha256:be24d7da11f4063ca23fbff6689bac5ded14fe4fc645e07f36588636969f1c27`. The pulled image's RepoDigest matches.
+- In the target image: brotli 1.2.1-r1, python 3.13.18, glibc 2.44-r9, certifi 2026.10.19, pypdf 6.21.4, pyasn1 0.6.5, tornado 6.6.
+- Migrations: `litellm_proxy_extras/migrations` has 213 entries in both 1.106.2 and 1.106.7, so this upgrade runs **no new Prisma migrations**. Rollback is a re-pin to the previous tag and digest without a Postgres restore. A pre-apply backup is still taken, per D-02.
+- `v1.108.x` was not chosen. It adds 7 one-way migrations and was one day old on pin day.
+- Previous image reference for this step: `ghcr.io/berriai/litellm:v1.106.2@sha256:7294b90f868c5c38c99b83021c7ba46f9b439e95f8e32964c925c7d2563a03f7`. Note that 1.106.2 now fails the advisory gate (GHSA-w4c7-34wj-hqm8), so re-pinning it needs the emergency exception described under Rollback.
+
 Never pin 1.91.0–1.100.3 (GHSA-7hp6-4w63-5g45), and never pin `latest` or an rc tag.
 
 ## Preconditions
