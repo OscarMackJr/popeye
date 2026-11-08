@@ -35,7 +35,8 @@ The saved plan was applied: 0 added, 1 changed, 0 destroyed. The new revision is
 | GW-05 env names include DISABLE_ADMIN_UI, LITELLM_LOG, PROXY_BATCH_WRITE_AT | PASS |
 | In-replica `/health/liveliness` (both replicas) | 200 / 200 — PASS |
 | In-replica `/health/readiness` | 200 on replica fvg46. On replica cbpsn the exec API returned 429 (rate-limited), but the platform readiness probe on the same path reports Healthy — PASS |
-| GW-05/GW-06 boot log: no MOVED/CROSSSLOT/ConnectionError | PENDING: `az monitor log-analytics query` needs interactive sign-in on this workstation. Check in the portal (`ContainerAppConsoleLogs_CL`, `RevisionName_s == '…--0000006'`) |
+| GW-05/GW-06 boot log: no MOVED/CROSSSLOT/ConnectionError | PASS. Log Analytics, queried through the ARM proxy (`az rest POST {workspace}/api/query`): `--0000006` has 20 console rows from 2 replicas, written 20:37:54Z. There are 0 MOVED/CROSSSLOT/ConnectionError/Traceback lines, 0 ERROR lines and 0 "Applying migration" lines. This matches the `--0000005` baseline of 20 rows |
+| GW-06 `coordination_redis: using a standalone Redis…` line | NOT OBSERVABLE, as on 2026-10-23: the INFO line is suppressed by `LITELLM_LOG=ERROR` |
 | `terraform plan -detailed-exitcode` after apply | 0 — PASS |
 | `scripts/Test-LitellmAdvisoryRange.py` | exit 0 — PASS |
 
