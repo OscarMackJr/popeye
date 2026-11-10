@@ -83,13 +83,13 @@ This milestone closes the Stage 1/Stage 2 MVP and builds the ratified v0.4.x age
 
 **Goal**: The one-way-door decisions and contracts that nono, Liam, hometown and olive build on are recorded, schema-validated and enforced in CI before any issuer or hook code depends on them.
 **Depends on**: Nothing (can run in parallel with Phase 1; must complete before Phases 3-5 build on it)
-**Requirements**: CON-01, CON-02, CON-03, CON-04, CON-05, CON-06, CON-07
+**Requirements**: CON-01, CON-02, CON-03, CON-04, CON-05, CON-06, CON-07, TSK-05
 **Success Criteria** (what must be TRUE):
 
   1. A spec/ADR records the decisions on G2 (shared user-entity budget + per-agent-key cap), G11 (`on_behalf_of` = Entra object ID), `direct_gateway` (required, no default) and G3 (cascade revocation). A reviewer can cite each one.
   2. CI validates fixtures against the new exchange, introspection and key-metadata schemas. The v0.1 session-credential schema and `SESSION_CREDENTIAL_ISSUER_v0.1` are visibly marked superseded.
   3. nono/Liam can look up a stable error code for every exchange, revocation, introspection and request-time refusal in the published catalogue. The issuance/introspection event schema has no content fields.
-  4. In CI, the agent registry (agents, introspection callers, relays) is checked against the vendored vocabulary, mismatched class names fail, and approving `regulated-identifier` fails.
+  4. In CI, the agent registry (agents with `grants`, `task_types`, `purposes` and `tenants`; introspection callers; relays; task-close owners) is checked against the vendored vocabulary v0.5, `authz/task_types.yaml` and `authz/roles.yaml`. An unregistered task type, purpose or grant fails (REQ-AGT-26), mismatched class names fail, and approving `regulated-identifier` fails.
   5. Terraform renders a policy bundle from the registries and vocabulary, and its hash can be compared across consumers.
 
 **Plans**: TBD
@@ -131,7 +131,7 @@ This milestone closes the Stage 1/Stage 2 MVP and builds the ratified v0.4.x age
 
 **Goal**: A user caller can exchange their user key for a short-lived, attributed agent key on the gateway FQDN, and revoke it, under every rule nono depends on. The admin credential never leaves Popeye's side.
 **Depends on**: Phase 3 (hook metadata contract), Phase 4 (user keys to derive from, stable FQDN)
-**Requirements**: ISS-01, ISS-02, ISS-03, ISS-04, ISS-05, ISS-06, ISS-07, ISS-08, ISS-09, ISS-10, ISS-11, ISS-12, ISS-13, ISS-14, ISS-15
+**Requirements**: ISS-01, ISS-02, ISS-03, ISS-04, ISS-05, ISS-06, ISS-07, ISS-08, ISS-09, ISS-10, ISS-11, ISS-12, ISS-13, ISS-14, ISS-15, TSK-01, TSK-02, TSK-03, TSK-04
 **Success Criteria** (what must be TRUE):
 
   1. The issuer is reachable at `/popeye/*` on the gateway FQDN as an internal-only, 2+ replica Container App with its own UAMI and `popeye_issuer` database. LiteLLM admin paths are unreachable on that FQDN.
@@ -139,6 +139,7 @@ This milestone closes the Stage 1/Stage 2 MVP and builds the ratified v0.4.x age
   3. A request for a 48h TTL yields an expiry of 8h or less, and never beyond the parent's. The agent key can't exceed the caller's class ceiling, tenant or shared budget. An expired agent key is refused with a distinct error.
   4. Revocation blocks the key (never deletes it), is idempotent and is limited to the minting user key. Calls on agent keys land ledger rows with `principal_type=agent` and a non-null `key_id`. 1,000 minted `key_id`s are lowercase canonical UUIDs with no duplicates.
   5. Content-free mint and revoke events are written. A sentinel key value never appears in any response, Log Analytics, App Insights, SpendLogs, ErrorLogs, Redis or the event tables.
+  6. Task binding (POPEYE_v0.4.4 §2): every mint carries `task_id` and a `task_type` registered for the agent. A missing binding, a malformed `task_id` and an unregistered `task_type` are each refused with a distinct error and no key is minted. A 48 h task TTL on an 8 h key gives `task_expires_at` ≤ `expires_at`. No path changes a key's binding after mint. Agent-key ledger rows carry non-null `task_id` and `task_type` (REQ-AGT-22..25).
 
 **Plans**: TBD
 **Research flag**: Needs `--research-phase`. Spike the minimum open-source admin role for the dedicated credential (fallback: the master key through a KV reference, recorded as debt).
@@ -147,7 +148,7 @@ This milestone closes the Stage 1/Stage 2 MVP and builds the ratified v0.4.x age
 
 **Goal**: Registered services can introspect agent keys safely. Relayed calls keep the original attribution, revocation propagates within bound, and one `key_id` is byte-identical across all five surfaces, which unblocks nono's `AgentSessionRecord`.
 **Depends on**: Phase 5
-**Requirements**: INT-01, INT-02, INT-03, INT-04, INT-05, INT-06, INT-07, INT-08, INT-09, INT-10, INT-11
+**Requirements**: INT-01, INT-02, INT-03, INT-04, INT-05, INT-06, INT-07, INT-08, INT-09, INT-10, INT-11, TSK-06, TSK-07, TSK-08, TSK-09
 **Success Criteria** (what must be TRUE):
 
   1. hometown and olive hold application keys issued through the governed path. Introspecting an active agent key as a registered caller returns identity properties and no secret. Expired, revoked, unknown and user keys each return a bare `active:false`, and introspection leaves status and `expires_at` unchanged.
@@ -155,6 +156,7 @@ This milestone closes the Stage 1/Stage 2 MVP and builds the ratified v0.4.x age
   3. A call relayed by a registered relay lands a row with `principal_type=agent`, the key's `on_behalf_of` and `relayed_by`. A `direct_gateway=false` key refuses unrelayed calls and calls from unregistered relays. The relay header is stripped and never logged.
   4. On at least 2 replicas under load, caching hometown/olive stubs refuse a revoked key within 60s. Revoking a user key cascades to every agent key it minted.
   5. TC-AGT-21 passes. One `key_id` is byte-identical across exchange, revocation, ledger, issuance event and introspection, including after revocation and expiry.
+  6. Task close and task-aware introspection (POPEYE_v0.4.4 §4, §5): only the owning caller closes a task type (sitcip, nexus, olive); a non-owner is refused, a double close succeeds, and a mint with a closed `task_id` is refused. Closing a task with two live keys makes both introspect `active:false` and be refused at the gateway. Active-key introspection returns `task_id`, `task_type` and `task_expires_at`. sit-cip and Nexus introspect successfully, are refused as relays, and their caching stubs refuse a closed task's key within 60 s (REQ-AGT-27..30).
 
 **Plans**: TBD
 **Research flag**: Needs `--research-phase`. Cross-replica revocation (TTL ≤30s + Redis `popeye:revoked` set vs. Managed Redis cluster mode). Clarify with nono, hometown and olive whether the 60s bound is gateway-side or end-to-end.
