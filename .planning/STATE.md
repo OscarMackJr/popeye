@@ -114,6 +114,7 @@ None yet.
 | 261104-t5w | Record NET-03 done, gateway reachable from VM, NET-06 pending Vinay; fix blank run-command args | 2026-11-04 | docs(quick-261104-t5w) | [261104-t5w-record-net03-done-gateway-reachable-from-vm](./quick/261104-t5w-record-net03-done-gateway-reachable-from-vm/) |
 | 261104-w3h | Record Vinay's NET-06 approval and the Roger-to-Oleg operator change | 2026-11-04 | docs(quick-261104-w3h) | [261104-w3h-record-net06-approval-oleg-replaces-roger](./quick/261104-w3h-record-net06-approval-oleg-replaces-roger/) |
 | 261110-mnk | Record networking's NET-06 RBAC completion; verification pending | 2026-11-10 | docs(quick-261110-mnk) | [261110-mnk-record-networking-s-net-06-rbac-completi](./quick/261110-mnk-record-networking-s-net-06-rbac-completi/) |
+| 261110-mxi | Fix strict-mode property errors in Test-PopeyeAzureVerificationVm.ps1 and isolate NET-06 checks | 2026-11-10 | fix(quick-261110-mxi) | [261110-mxi-fix-strict-mode-property-errors-in-test-](./quick/261110-mxi-fix-strict-mode-property-errors-in-test-/) |
 
 ## Deferred Items
 

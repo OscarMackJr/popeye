@@ -76,10 +76,21 @@ function New-Check {
 
 function Get-ResourceGroupFromId { param([string]$Id); (($Id -split '/')[4]) }
 
+# Strict-mode-safe property read: az omits absent properties (for example
+# publicIpAddress on a NIC with no public IP), and StrictMode Latest throws on them.
+function Get-Prop {
+  param($Object, [string]$Name)
+  if ($null -eq $Object) { return $null }
+  $p = $Object.PSObject.Properties[$Name]
+  if ($p) { return $p.Value }
+  return $null
+}
+
 function Get-SubnetPrefix {
   param($Subnet)
-  if ($Subnet.addressPrefix) { return [string]$Subnet.addressPrefix }
-  return [string]@($Subnet.addressPrefixes)[0]
+  $single = Get-Prop $Subnet 'addressPrefix'
+  if ($single) { return [string]$single }
+  return [string]@(Get-Prop $Subnet 'addressPrefixes')[0]
 }
 
 $accountArgs = @('account','show','--output','json')
@@ -209,6 +220,7 @@ catch { $checks.Add((New-Check 'NET-03 environment private DNS zone' $false $_.E
 
 # --- NET-05 / NET-06 VM checks ---------------------------------------------
 if ($VmName) {
+  $vm = $null
   try {
     $vm = Invoke-AzJson @('vm','show','--resource-group',$VmResourceGroupName,'--name',$VmName,'--subscription',$subscription,'--show-details','--output','json')
     $evidence.vm = [ordered]@{ id=$vm.id; name=$vm.name; location=$vm.location; powerState=$vm.powerState; osType=$vm.storageProfile.osDisk.osType }
@@ -216,7 +228,7 @@ if ($VmName) {
     $nics = @($vm.networkProfile.networkInterfaces | ForEach-Object { Invoke-AzJson @('network','nic','show','--ids',$_.id,'--subscription',$subscription,'--output','json') })
 
     # NET-05
-    $hasPublicIp = @($nics.ipConfigurations | Where-Object { $_.publicIpAddress }).Count -gt 0
+    $hasPublicIp = @($nics.ipConfigurations | Where-Object { Get-Prop $_ 'publicIpAddress' }).Count -gt 0
     $checks.Add((New-Check 'NET-05 VM has no public IP' (-not $hasPublicIp) "NICs: $((@($nics.name) -join ', '))"))
 
     $bastionPrefix = $null
@@ -236,14 +248,14 @@ if ($VmName) {
     if ($callerVnet) { $vmSubnet = @($callerVnet.subnets | Where-Object { $subnetIds -contains $_.id }) }
     $bastionCidrs = @()
     if ($callerVnet) { $bastionCidrs = @($callerVnet.subnets | Where-Object name -eq $BastionSubnetName | ForEach-Object { Get-SubnetPrefix $_ }) }
-    $nsgIds = @(@($nics.networkSecurityGroup.id) + @($vmSubnet.networkSecurityGroup.id) | Where-Object { $_ } | Select-Object -Unique)
-    $nsgRules = @($nsgIds | ForEach-Object { Invoke-AzJson @('network','nsg','show','--ids',$_,'--subscription',$subscription,'--output','json') } | ForEach-Object { @($_.securityRules) + @($_.defaultSecurityRules) })
+    $nsgIds = @(@(@($nics) + @($vmSubnet) | ForEach-Object { Get-Prop (Get-Prop $_ 'networkSecurityGroup') 'id' }) | Where-Object { $_ } | Select-Object -Unique)
+    $nsgRules = @($nsgIds | ForEach-Object { Invoke-AzJson @('network','nsg','show','--ids',$_,'--subscription',$subscription,'--output','json') } | ForEach-Object { @(Get-Prop $_ 'securityRules') + @(Get-Prop $_ 'defaultSecurityRules') })
     $rdpAllow = @($nsgRules | Where-Object {
         $_ -and $_.direction -eq 'Inbound' -and $_.access -eq 'Allow' -and
-        ($_.destinationPortRange -in @('3389','*') -or @($_.destinationPortRanges) -contains '3389')
+        ((Get-Prop $_ 'destinationPortRange') -in @('3389','*') -or @(Get-Prop $_ 'destinationPortRanges') -contains '3389')
       })
     $badRdp = @($rdpAllow | Where-Object {
-        $sources = @($_.sourceAddressPrefix) + @($_.sourceAddressPrefixes) | Where-Object { $_ }
+        $sources = @(Get-Prop $_ 'sourceAddressPrefix') + @(Get-Prop $_ 'sourceAddressPrefixes') | Where-Object { $_ }
         @($sources | Where-Object { $_ -in @('*','Internet','0.0.0.0/0') -or ($_ -notin $bastionCidrs -and $_ -ne 'VirtualNetwork' -and $_ -ne 'AzureLoadBalancer') }).Count -gt 0
       })
     $flagged = @($badRdp | ForEach-Object { $_.name })
@@ -252,11 +264,16 @@ if ($VmName) {
     $evidence.networkSecurityGroups = @($nsgIds)
 
     $extensions = @(Invoke-AzJson @('vm','extension','list','--resource-group',$VmResourceGroupName,'--vm-name',$VmName,'--subscription',$subscription,'--output','json'))
-    $entraExtension = @($extensions | Where-Object { $_.publisher -eq 'Microsoft.Azure.ActiveDirectory' -and $_.typePropertiesType -eq 'AADLoginForWindows' -or ($_.publisher -eq 'Microsoft.Azure.ActiveDirectory' -and $_.type -like '*AADLoginForWindows') }).Count -gt 0
-    $checks.Add((New-Check 'NET-05 Entra ID Windows sign-in extension enabled' $entraExtension "Extensions: $((@($extensions | ForEach-Object { "$($_.publisher)/$($_.name)" }) -join ', '))"))
+    $entraExtension = @($extensions | Where-Object { (Get-Prop $_ 'publisher') -eq 'Microsoft.Azure.ActiveDirectory' -and ((Get-Prop $_ 'typePropertiesType') -eq 'AADLoginForWindows' -or (Get-Prop $_ 'type') -like '*AADLoginForWindows') }).Count -gt 0
+    $checks.Add((New-Check 'NET-05 Entra ID Windows sign-in extension enabled' $entraExtension "Extensions: $((@($extensions | ForEach-Object { "$(Get-Prop $_ 'publisher')/$($_.name)" }) -join ', '))"))
+  }
+  catch { $checks.Add((New-Check 'NET-05 VM checks' $false $_.Exception.Message)) }
 
-    # NET-06
-    $roleAssignments = @(Invoke-AzJson @('role','assignment','list','--all','--include-inherited','--scope',$vm.id,'--subscription',$subscription,'--output','json'))
+  # NET-06 runs in its own block so a NET-05 error cannot hide the login-role result.
+  try {
+    if (-not $vm) { throw 'VM not read; NET-06 not evaluated.' }
+    # --all is not combined with --scope: az rejects that pair.
+    $roleAssignments = @(Invoke-AzJson @('role','assignment','list','--include-inherited','--scope',$vm.id,'--subscription',$subscription,'--output','json'))
     $userLogin = @($roleAssignments | Where-Object { $_.roleDefinitionName -eq 'Virtual Machine User Login' })
     $adminLogin = @($roleAssignments | Where-Object { $_.roleDefinitionName -eq 'Virtual Machine Administrator Login' })
     $evidence.vmLoginAssignments = @(($userLogin + $adminLogin) | Select-Object principalName,principalType,roleDefinitionName,scope)
@@ -275,7 +292,7 @@ if ($VmName) {
       $checks.Add((New-Check 'NET-06 no Virtual Machine Administrator Login unless approved' $true 'No administrator login assignments.'))
     }
   }
-  catch { $checks.Add((New-Check 'NET-05/NET-06 VM checks' $false $_.Exception.Message)) }
+  catch { $checks.Add((New-Check 'NET-06 VM login role checks' $false $_.Exception.Message)) }
 }
 else {
   $checks.Add((New-Check 'NET-05/NET-06 VM-specific checks' $false 'Not run: rerun with -VmName.'))
