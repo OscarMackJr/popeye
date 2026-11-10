@@ -1,0 +1,67 @@
+# Popeye agent registry (POPEYE_v0.4.4 §3; closes POPEYE_v0.4.1 §5 O3).
+#
+# Lives beside the model-approval registry and is checked against the
+# vendored vocabulary, authz/task_types.yaml and authz/roles.yaml by
+# scripts/Test-AgentRegistry.py in the registry-conformance CI job
+# (REQ-AGT-26, REQ-VOC-12).
+#
+# Identity only. popeye is semantics-blind: this file records WHICH agents,
+# task types, callers and relays exist. It never says what a task type or
+# grant permits; that is Cedar policy owned by each system
+# (fiskroad contracts/authz/policies/). The checker rejects any field not
+# listed below, so capabilities cannot creep in (REQ-VOC-14).
+#
+# Adding an agent, grant, task type, caller or relay is a program decision,
+# not configuration. Policy metadata only: no keys or secrets here.
+
+version: 0.1
+
+# Registered agents. The exchange refuses an agent_id not listed here, a
+# task_type not in the agent's task_types, and a purpose not in its purposes.
+# The minted key inherits the caller's tenant, which must also be in tenants.
+#
+# POC seed: liam is the agent named in NONO_v0.4.1 and NONO_v0.4.4. Its
+# grants, purposes and tenants below are POC values pending program
+# confirmation.
+agents:
+  - agent_id: liam
+    grants:
+      - agent_nono_coder
+      - agent_sitcip_analyst
+    task_types:
+      - nono.coding_session
+      - sitcip.investigation
+    purposes:
+      - internal-support
+    tenants:
+      - 5325ffe9-5727-4d88-9832-aebabb8d0538 # TENANT_ALPHA
+
+# Registered introspection callers (POPEYE_v0.4.2 §2.3, POPEYE_v0.4.4 §5).
+# Introspection confers identity, not capability. sitcip and nexus are
+# read-only callers added by D-4 and must never be relays (REQ-AGT-30).
+introspection_callers:
+  - caller_id: hometown
+  - caller_id: olive
+  - caller_id: sitcip
+  - caller_id: nexus
+
+# Registered relays (POPEYE_v0.4.2 §2.6). POC set: hometown only.
+relays:
+  - relay_id: hometown
+
+# Who may close each task type (POPEYE_v0.4.4 §4). Exactly one rule per
+# registered task type. A caller may close only the task type it owns.
+# nono.coding_session has no closing caller: it closes by session-end
+# revocation of the agent key.
+task_close:
+  - task_type: nono.coding_session
+    closed_by: session_end_revocation
+  - task_type: sitcip.investigation
+    closed_by: caller
+    owner_caller: sitcip
+  - task_type: nexus.deal_review
+    closed_by: caller
+    owner_caller: nexus
+  - task_type: olive.proposal
+    closed_by: caller
+    owner_caller: olive

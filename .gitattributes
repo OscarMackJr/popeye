@@ -1,0 +1,2 @@
+# Vendored contracts are hashed over LF; keep them LF on every checkout.
+config/vendored/** text eol=lf

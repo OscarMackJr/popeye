@@ -1,0 +1,40 @@
+# Fiskroad role catalogue — the only role names Cedar policies may use.
+# Owning spec: specs/FISKROAD_ACCESS_CONTROL_RBAC_TBAC_v0.1.md §4.1
+# Checked by tools/authz_check.py (REQ-AC-02: names come only from here;
+# at most 6 human roles per system).
+version: 0.1
+
+# Human roles: Entra ID app roles, assigned to Entra groups, never to
+# individual users. Group names are set in Phase 1
+# (DECISION_entra-group-naming.md); entra_group stays null until then.
+# privileged: true -> activated just in time through PIM, never assigned
+# permanently (REQ-AC-08).
+human_roles:
+  nono:
+    - { name: nono_policy_admin,      privileged: true,  entra_group: null }
+    - { name: nono_override_approver, privileged: true,  entra_group: null }
+    - { name: nono_operator,          privileged: false, entra_group: null }
+  sitcip:
+    - { name: sitcip_operator, privileged: false, entra_group: null }
+    - { name: sitcip_owner,    privileged: false, entra_group: null }
+    - { name: sitcip_auditor,  privileged: false, entra_group: null }
+    - { name: sitcip_admin,    privileged: true,  entra_group: null }
+  nexus:
+    - { name: nexus_admin,      privileged: true,  entra_group: null }
+    - { name: nexus_supervisor, privileged: false, entra_group: null }
+    - { name: nexus_principal,  privileged: false, entra_group: null }
+    - { name: nexus_user,       privileged: false, entra_group: null }
+
+# Agent grants: what an agent principal itself may be granted. Held in
+# popeye's agent registry (DECISION_task-binding-on-agent-key.md); an
+# agent's effective permission is its grants INTERSECTED with its
+# on_behalf_of user's roles (vocabulary §3.2).
+agent_grants:
+  - { name: agent_nono_coder,     system: nono }
+  - { name: agent_sitcip_analyst, system: sitcip }
+  - { name: agent_nexus_reader,   system: nexus }
+
+# Application roles: workloads acting for a user through an approved
+# olive proposal (DECISION_agent-key-sitcip-nexus-reads.md).
+application_roles:
+  - { name: olive_executor, system: olive }

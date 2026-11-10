@@ -1,0 +1,38 @@
+# Negative fixture (REQ-AGT-26 CI): sitcip.investigation closable by nexus
+# Must be rejected by scripts/Test-AgentRegistry.py.
+version: 0.1
+
+agents:
+  - agent_id: liam
+    grants:
+      - agent_nono_coder
+      - agent_sitcip_analyst
+    task_types:
+      - nono.coding_session
+      - sitcip.investigation
+    purposes:
+      - internal-support
+    tenants:
+      - 5325ffe9-5727-4d88-9832-aebabb8d0538 # TENANT_ALPHA
+
+introspection_callers:
+  - caller_id: hometown
+  - caller_id: olive
+  - caller_id: sitcip
+  - caller_id: nexus
+
+relays:
+  - relay_id: hometown
+
+task_close:
+  - task_type: nono.coding_session
+    closed_by: session_end_revocation
+  - task_type: sitcip.investigation
+    closed_by: caller
+    owner_caller: nexus
+  - task_type: nexus.deal_review
+    closed_by: caller
+    owner_caller: nexus
+  - task_type: olive.proposal
+    closed_by: caller
+    owner_caller: olive

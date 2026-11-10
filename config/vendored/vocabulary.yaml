@@ -1,8 +1,8 @@
 # Fiskroad program shared vocabulary — machine-readable form.
-# Owning spec: fiskroad/specs/PROGRAM_SHARED_VOCABULARY_v0.4.md
+# Owning spec: fiskroad/specs/PROGRAM_SHARED_VOCABULARY_v0.5.md
 # This file is the comparison target for cross-repo conformance checks.
 # Consuming repos vendor it unchanged and record its SHA-256.
-version: 0.4
+version: 0.5
 
 # ---- carried forward from v0.3, unchanged ----
 
@@ -80,3 +80,33 @@ action_outcomes:
   - expired
 
 action_id_format: '^[a-z0-9_.]+@[0-9]+$'
+
+# ---- new at v0.5 (DECISION_task-vocabulary.md, D-2) ----
+
+# A task is a bounded unit of work with an owner, a type and a lifecycle.
+# Task-based access control switches permissions on for one task and off
+# when it closes. The binding travels on the popeye agent key
+# (DECISION_task-binding-on-agent-key.md, D-3); it carries identity, never
+# capabilities.
+
+# Lowercase canonical UUID, same form as tenant_id.
+task_id_format: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+
+# <system>.<kind>. Registered values: contracts/authz/task_types.yaml,
+# mirrored by popeye's agent registry; an unregistered type is refused at mint.
+task_type_format: '^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$'
+
+# Task lifecycle. closed, expired and revoked all end the binding;
+# a request bound to an ended task is refused.
+task_states:
+  - open
+  - closed
+  - expired
+  - revoked
+
+task_binding:
+  # A task binding never outlives its agent key (itself capped at 8 h).
+  max_lifetime_hours: 8
+  outlives_agent_key: false
+  # Identity, not capability: what a task_type permits lives in policy.
+  carries_capabilities: false
