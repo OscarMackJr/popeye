@@ -19,8 +19,8 @@
 
 .EXAMPLE
   .\scripts\Test-PopeyeAzureVerificationVm.ps1 -VmName EUS-VM-POPEYE `
-    -CallerResourceGroupName <caller rg> -VmResourceGroupName <vm rg> `
-    -ApprovedOperatorDisplayNames 'Oscar Mack','Oleg'
+    -CallerResourceGroupName EUS-RG-POPEYE-VNET-01 -VmResourceGroupName EUS-RG-POPEYE-VM-01 `
+    -ApprovedOperatorDisplayNames '<oscar upn>','<oleg upn>'  # role-assignment principalName (UPN), not display name
 #>
 [CmdletBinding()]
 param(

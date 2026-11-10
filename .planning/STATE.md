@@ -85,6 +85,7 @@ None yet.
   - 2026-11-04 (reply): NET-03 is done: networking created the env DNS zone. Gateway FQDN → 10.60.0.108 and TCP 443 PASS from the VM (run-command preview, `Test-PopeyeVerificationVm.ps1`). NET-06 is held for Vinay: only Oscar has VM Admin Login (original instruction), and Oscar to User Login plus Roger User Login/Reader needs his confirmation. Networking recommends keeping 443-anywhere through the ceremony (Security to approve) and Promenet owning shared networking. Plan 01-08 gates now: the NET-06 decision and Security's view on outbound.
   - 2026-11-04 (Vinay): approved Oscar and Oleg on the VM as non-admins. Oleg replaces Roger as the second operator. The NET-06 RBAC change has been requested from networking.
   - 2026-11-10: Networking applied NET-06. Oscar moved from Administrator Login to User Login; Oleg has User Login plus Reader on the VM, NIC and Bastion; Roger's access was removed. Outbound HTTPS is unchanged for the ceremony. Our verification (`Test-PopeyeAzureVerificationVm.ps1` plus a Bastion sign-in by each operator) is pending; NET-06 stays unticked until it passes.
+  - 2026-11-10 (verified): `Test-PopeyeAzureVerificationVm.ps1` (after the 261110-mxi fix) shows NET-01/02/05/06 PASS: only the two operators hold VM User Login, with no Administrator Login. NET-06 is ticked once both operators have signed in through Bastion. NET-03 FAIL: the env DNS zone is not linked to `vnet-popeye-stage1-stage2-eastus2` (caller VNet link fine; ceremony not blocked). Raised with networking.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
@@ -96,7 +97,7 @@ None yet.
   - a Container Apps environment private DNS zone (`ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` → 10.60.0.108), linked to both VNets; without it the gateway FQDN does not resolve and the smoke test is blocked;
   - removing the internet-sourced RDP rule `Allow_Iliya_Promenet`;
   - User Login for both approved operators.
-- `EUS-VM-POPEYE` login (NET-06): 2026-11-04, Vinay approved non-admin access for Oscar and Oleg (Oleg replaced Roger). Networking applied the change on 2026-11-10 (Oscar User Login; Oleg User Login plus Reader; Roger removed). Verification pending.
+- `EUS-VM-POPEYE` login (NET-06): 2026-11-04, Vinay approved non-admin access for Oscar and Oleg (Oleg replaced Roger). Networking applied the change on 2026-11-10, and the control-plane check PASSes. Bastion sign-in by both operators is pending.
 - Program/nono decisions needed early in Phase 2: G11 (`on_behalf_of` format, one-way door), G2 (budget model, before any fleet mint), the `direct_gateway` default, and the G3 admin-revocation carve-out (OPS-03 depends on it).
 - Hook internals are LOW confidence until the Phase 3 spike, which gates the Phase 5 metadata contract.
 - The 60s revocation bound may be read as end-to-end (about 120s worst case). Clarify with nono, hometown and olive before Phase 6.
@@ -115,6 +116,7 @@ None yet.
 | 261104-w3h | Record Vinay's NET-06 approval and the Roger-to-Oleg operator change | 2026-11-04 | docs(quick-261104-w3h) | [261104-w3h-record-net06-approval-oleg-replaces-roger](./quick/261104-w3h-record-net06-approval-oleg-replaces-roger/) |
 | 261110-mnk | Record networking's NET-06 RBAC completion; verification pending | 2026-11-10 | docs(quick-261110-mnk) | [261110-mnk-record-networking-s-net-06-rbac-completi](./quick/261110-mnk-record-networking-s-net-06-rbac-completi/) |
 | 261110-mxi | Fix strict-mode property errors in Test-PopeyeAzureVerificationVm.ps1 and isolate NET-06 checks | 2026-11-10 | fix(quick-261110-mxi) | [261110-mxi-fix-strict-mode-property-errors-in-test-](./quick/261110-mxi-fix-strict-mode-property-errors-in-test-/) |
+| 261110-n1z | Record NET-06 control-plane verification PASS and NET-03 Popeye VNet link gap | 2026-11-10 | docs(quick-261110-n1z) | [261110-n1z-record-net-06-control-plane-verification](./quick/261110-n1z-record-net-06-control-plane-verification/) |
 
 ## Deferred Items
 
