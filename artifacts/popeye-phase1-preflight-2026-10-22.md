@@ -183,3 +183,18 @@ net-06: approved (Vinay), pending networking RBAC change
 - Vinay's decision (2026-11-04): it is fine for Oleg and Oscar to have access to the VM as non-admins. This supersedes the original instruction restricting the VM to Oscar.
 - Requested from networking: move Oscar from Virtual Machine Administrator Login to Virtual Machine User Login, and grant Oleg Virtual Machine User Login plus the narrow-scope Reader needed to connect through Bastion. No other principals.
 - Verify after the change with `scripts/Test-PopeyeAzureVerificationVm.ps1 -ApprovedOperatorDisplayNames 'Oscar Mack','<Oleg display name>'`.
+
+## NET-06 RBAC applied by networking (2026-11-10)
+
+net-06: applied (networking), pending Popeye verification
+
+- Networking reports the approved change is done on EUS-VM-POPEYE:
+  - Oscar: Virtual Machine Administrator Login removed, replaced with Virtual Machine User Login.
+  - Oleg: Virtual Machine User Login on the VM, plus Reader on the VM, its NIC and EUS-POPEY-BASTION for Bastion connectivity.
+  - Roger: temporary Popeye access removed.
+  - Networking reviewed the VM login role assignments; no other unapproved principals hold VM login roles.
+- Outbound HTTPS (NAT gateway, NSG Internet outbound 443) is unchanged for the ceremony, as agreed.
+- Still to do on our side, after RBAC propagation:
+  1. `scripts/Test-PopeyeAzureVerificationVm.ps1 -ApprovedOperatorDisplayNames 'Oscar Mack','<Oleg display name>'`: NET-06 rows PASS (User Login limited to the two operators, both hold it, no Administrator Login).
+  2. Oscar and Oleg each sign in through EUS-POPEY-BASTION with Entra credentials and confirm a non-admin session.
+- NET-06 gets ticked once both pass. Anything unexpected goes back to networking.

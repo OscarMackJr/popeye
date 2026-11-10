@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-11-10T11:36:29.096Z",
+  "timestamp": "2026-11-10T21:30:00.000Z",
   "phase": "01",
   "phase_name": "network-proof-gateway-hardening-smoke-row",
   "phase_dir": ".planning/phases/01-network-proof-gateway-hardening-smoke-row",
@@ -9,30 +9,84 @@
   "total_tasks": 3,
   "status": "paused",
   "completed_tasks": [
-    {"id": "01-01..01-07", "name": "Plans 01-01 to 01-07", "status": "done", "commit": "1b0ca84"},
-    {"id": "01-08 T1", "name": "Ceremony readiness", "status": "in_progress", "progress": "Credential decision done (extend-grant). VM egress open (NAT gateway); az 2.92.0 + psql 16.4 on VM; env DNS zone created (NET-03); gateway FQDN -> 10.60.0.108 and TCP 443 PASS from VM. NET-06 approved by Vinay; networking RBAC change outstanding."}
+    {
+      "id": "01-01..01-07",
+      "name": "Plans 01-01 to 01-07",
+      "status": "done",
+      "commit": "1b0ca84"
+    },
+    {
+      "id": "01-08 T1",
+      "name": "Ceremony readiness",
+      "status": "in_progress",
+      "progress": "Credential decision done (extend-grant). VM egress open (NAT gateway); az 2.92.0 + psql 16.4 on VM; env DNS zone created (NET-03); gateway FQDN -> 10.60.0.108 and TCP 443 PASS from VM. NET-06 approved by Vinay and applied by networking 2026-11-10; our verification pending."
+    }
   ],
   "remaining_tasks": [
-    {"id": "01-08 T1", "name": "Confirm NET-06 RBAC applied (Oscar User Login; Oleg User Login + Reader) and verify", "status": "blocked"},
-    {"id": "01-08 T2", "name": "Admin ceremony in Bastion session", "status": "not_started"},
-    {"id": "01-08 T3", "name": "Write and scrub redacted ceremony evidence", "status": "not_started"},
-    {"id": "01-09", "name": "Network evidence refresh + requirement-to-evidence index (NET-01..06)", "status": "not_started"}
+    {
+      "id": "01-08 T1",
+      "name": "Verify NET-06 (Test-PopeyeAzureVerificationVm.ps1 + Bastion sign-in by Oscar and Oleg), record, tick NET-06",
+      "status": "not_started"
+    },
+    {
+      "id": "01-08 T2",
+      "name": "Admin ceremony in Bastion session",
+      "status": "not_started"
+    },
+    {
+      "id": "01-08 T3",
+      "name": "Write and scrub redacted ceremony evidence",
+      "status": "not_started"
+    },
+    {
+      "id": "01-09",
+      "name": "Network evidence refresh + requirement-to-evidence index (NET-01..06)",
+      "status": "not_started"
+    }
   ],
-  "blockers": [
-    {"description": "NET-06: networking has not yet moved Oscar from VM Administrator Login to User Login or granted Oleg User Login + Reader (approved by Vinay 2026-11-04; request drafted for networking)", "type": "external", "workaround": "none agreed; running the ceremony on Oscar's Admin Login would need explicit written approval"}
-  ],
+  "blockers": [],
   "human_actions_pending": [
-    {"action": "Networking: apply NET-06 RBAC (Oscar -> VM User Login; Oleg -> VM User Login + Reader on VM, NIC, Bastion; no others)", "context": "Vinay approved 2026-11-04; Oleg replaces Roger", "blocking": true},
-    {"action": "Security: view on keeping NSG Internet outbound 443-anywhere through the ceremony", "context": "networking recommends keeping it until the central firewall", "blocking": false},
-    {"action": "Operator: give Oleg's display name for -ApprovedOperatorDisplayNames", "context": "Test-PopeyeAzureVerificationVm.ps1 NET-06 check", "blocking": false}
+    {
+      "action": "Operator: run Test-PopeyeAzureVerificationVm.ps1 and have Oscar and Oleg each sign in through EUS-POPEY-BASTION",
+      "context": "networking applied NET-06 RBAC 2026-11-10; allow a few minutes for RBAC propagation",
+      "blocking": true
+    },
+    {
+      "action": "Security: view on keeping NSG Internet outbound 443-anywhere through the ceremony",
+      "context": "networking recommends keeping it until the central firewall",
+      "blocking": false
+    },
+    {
+      "action": "Operator: give Oleg's display name for -ApprovedOperatorDisplayNames",
+      "context": "Test-PopeyeAzureVerificationVm.ps1 NET-06 check",
+      "blocking": false
+    }
   ],
   "decisions": [
-    {"decision": "Env DNS zone networking-owned; zone lives in EUS-RG-POPEYE-VM-01, not Popeye Terraform", "rationale": "env-dns-owner networking-owns; Promenet owns shared networking", "phase": "01"},
-    {"decision": "VM egress via NAT gateway, NSG Internet outbound TCP 443 only; keep through ceremony", "rationale": "networking recommendation; service-tag narrowing deferred to central firewall, Security to confirm", "phase": "01"},
-    {"decision": "Oleg replaces Roger as second approved operator; both non-admin", "rationale": "Vinay 2026-11-04", "phase": "01"},
-    {"decision": "NET-06 unticked in REQUIREMENTS.md until RBAC change is verified", "rationale": "approval alone is not completion", "phase": "01"}
+    {
+      "decision": "Env DNS zone networking-owned; zone lives in EUS-RG-POPEYE-VM-01, not Popeye Terraform",
+      "rationale": "env-dns-owner networking-owns; Promenet owns shared networking",
+      "phase": "01"
+    },
+    {
+      "decision": "VM egress via NAT gateway, NSG Internet outbound TCP 443 only; keep through ceremony",
+      "rationale": "networking recommendation; service-tag narrowing deferred to central firewall, Security to confirm",
+      "phase": "01"
+    },
+    {
+      "decision": "Oleg replaces Roger as second approved operator; both non-admin",
+      "rationale": "Vinay 2026-11-04",
+      "phase": "01"
+    },
+    {
+      "decision": "NET-06 unticked in REQUIREMENTS.md until RBAC change is verified",
+      "rationale": "approval alone is not completion",
+      "phase": "01"
+    }
   ],
-  "uncommitted_files": ["scripts/Test-PopeyeAzureVerificationVm.zip (untracked, intentionally not committed)"],
-  "next_action": "Ask whether networking applied the NET-06 RBAC change and for Oleg's display name. If applied, run scripts/Test-PopeyeAzureVerificationVm.ps1 with -ApprovedOperatorDisplayNames 'Oscar Mack','<Oleg>', record in the preflight artifact, tick NET-06, then /gsd-execute-phase 1 to run 01-08 Task 2 (interactive Bastion ceremony).",
+  "uncommitted_files": [
+    "scripts/Test-PopeyeAzureVerificationVm.zip (untracked, intentionally not committed)"
+  ],
+  "next_action": "Run scripts/Test-PopeyeAzureVerificationVm.ps1 -ApprovedOperatorDisplayNames 'Oscar Mack','<Oleg display name>' and have both operators sign in through Bastion. Record the result in the preflight artifact, tick NET-06, then /gsd-execute-phase 1 to run 01-08 Task 2 (interactive Bastion ceremony).",
   "context_notes": "Work since 2026-10-23 ran as quick tasks 261027-j3d..261104-w3h (see STATE.md Quick Tasks and artifacts/popeye-phase1-preflight-2026-10-22.md). All pushed to origin/main; gateway re-pinned to LiteLLM v1.106.7 by PR #3 (b9be2ba). Postgres now resolves to 10.60.2.4 (was .5). Gateway FQDN popeye-stage1-stage2-eastus2-app.internal.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io; env staticIp 10.60.0.108. VM RG EUS-RG-POPEYE-VM-01; VM 10.10.2.4 in EUS-POPEYE-VNET-01/EUS-POPEYE-VNET-02."
 }
