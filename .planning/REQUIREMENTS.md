@@ -58,10 +58,24 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
   - user-key revocation cascades (G3).
 - [ ] **CON-02**: New JSON schemas exist for the exchange request/response, introspection response and key metadata. The v0.1 session-credential schema and `SESSION_CREDENTIAL_ISSUER_v0.1` are marked superseded (G8). CI validates the fixtures.
 - [ ] **CON-03**: A stable error-code catalogue covers exchange, revocation, introspection and request-time refusals, and nono/Liam can branch on it (G15).
-- [ ] **CON-04**: An agent registry (`agent_id`, `owner`, `allowed_purposes`) plus registered introspection callers and relays live beside the model-approval registry. CI checks them against the vendored vocabulary [O3].
+- [ ] **CON-04**: An agent registry lives beside the model-approval registry, with registered introspection callers, relays and task-close owners in the same file. Each agent entry holds `agent_id`, `grants`, `task_types`, `purposes` and `tenants`, and nothing that says what a task type or grant permits. CI checks it against the vendored vocabulary, `authz/task_types.yaml` and `authz/roles.yaml` [O3, closed by POPEYE_v0.4.4 §3; REQ-AGT-26].
 - [ ] **CON-05**: Registry class names match the program vocabulary exactly, and approving `regulated-identifier` fails validation and CI [REQ-DCE-05, REQ-DCE-06].
 - [ ] **CON-06**: The issuance and introspection event schema and sink are defined, with events kept content-free (G6).
 - [ ] **CON-07**: A policy bundle is rendered by Terraform from the registries and vocabulary and consumed by both the gateway hook and the issuer, with its hash exposed on the health endpoints.
+
+### Task Binding (TSK) — POPEYE_v0.4.4
+
+Ratified 2026-11-10 with NONO_v0.4.4 (decisions D-3, D-4). popeye stays semantics-blind: it records which task a key belongs to and whether the task is open, never what a task type permits (Cedar policy, owned per system).
+
+- [ ] **TSK-01**: The exchange requires `task_id` (lowercase canonical UUID) and a `task_type` registered for the agent, with optional `task_ttl_seconds`. A request with no task binding, a malformed `task_id` or an unregistered `task_type` fails with a distinct error, and no key is minted [REQ-AGT-22].
+- [ ] **TSK-02**: `task_expires_at` = min(requested, key `expires_at`). A 48 h task TTL on an 8 h key yields `task_expires_at` ≤ `expires_at` [REQ-AGT-23].
+- [ ] **TSK-03**: A key's task binding is immutable after mint. No popeye path accepts a task change for an existing `key_id`; a new task needs a new key. One `task_id` may sit on several keys [REQ-AGT-24].
+- [ ] **TSK-04**: Ledger rows on agent keys carry `task_id` and `task_type`; the live verifier asserts both are non-null on agent traffic [REQ-AGT-25].
+- [ ] **TSK-05**: The agent registry is checked in CI against the vendored `vocabulary.yaml` and `authz/task_types.yaml`, and fails on an unregistered task type, purpose or grant [REQ-AGT-26].
+- [ ] **TSK-06**: Only the owning caller can close a task (sitcip → `sitcip.investigation`, nexus → `nexus.deal_review`, olive → `olive.proposal`). Close is idempotent and never reopens; a mint with a closed `task_id` is refused. `nono.coding_session` closes by session-end revocation [REQ-AGT-27].
+- [ ] **TSK-07**: After task close, every key bound to it introspects `active:false` and is refused at the gateway [REQ-AGT-28].
+- [ ] **TSK-08**: Introspection returns `task_id`, `task_type` and `task_expires_at` for an active key; a key whose task is not `open` returns `active:false` and nothing else. Caching sit-cip and Nexus stubs refuse a closed task's key within 60 s, and no cache outlives `expires_at` or `task_expires_at` [REQ-AGT-29].
+- [ ] **TSK-09**: sit-cip and Nexus are registered introspection callers (reads only) and are not relays. Introspection by each succeeds; presenting either as a relay identity is refused [REQ-AGT-30].
 
 ### Request-Time Enforcement (ENF)
 
@@ -171,7 +185,7 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
 - **ID-01**: Entra Agent ID / machine-identity exchange (needs nono re-ratification)
 - **SEC-01**: Sender-constrained keys (mTLS/DPoP) and mTLS relays
 - **INT-v2-01**: RFC 7662 field aliases on introspection
-- **REG-01**: Enforcing the agent registry's `allowed_purposes` at exchange
+- **REG-01**: Enforcing the agent registry's `purposes` and `tenants` at exchange (POPEYE_v0.4.4 §3 defines the fields; §2.2 makes only `task_type` a mint-time refusal)
 - **PG-01**: Postgres Entra authentication for the issuer UAMI
 
 ## Out of Scope
@@ -213,7 +227,7 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
 | CON-01 | Phase 2 | Pending |
 | CON-02 | Phase 2 | Pending |
 | CON-03 | Phase 2 | Pending |
-| CON-04 | Phase 2 | Pending |
+| CON-04 | Phase 2 | Implemented on branch (quick 261110-a4r; PR open) |
 | CON-05 | Phase 2 | Pending |
 | CON-06 | Phase 2 | Pending |
 | CON-07 | Phase 2 | Pending |
@@ -271,12 +285,21 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
 | OPS-01 | Phase 8 | Pending |
 | OPS-02 | Phase 8 | Pending |
 | OPS-03 | Phase 8 | Pending |
+| TSK-01 | Phase 5 | Pending |
+| TSK-02 | Phase 5 | Pending |
+| TSK-03 | Phase 5 | Pending |
+| TSK-04 | Phase 5 | Pending |
+| TSK-05 | Phase 2 | Implemented on branch (quick 261110-a4r; PR open) |
+| TSK-06 | Phase 6 | Pending (close-owner map in registry; endpoint not built) |
+| TSK-07 | Phase 6 | Pending |
+| TSK-08 | Phase 6 | Pending |
+| TSK-09 | Phase 6 | Pending (registry entry and CI guard done; introspection not built) |
 
 **Coverage:**
-- v1 requirements: 78 total
-- Mapped to phases: 78
+- v1 requirements: 87 total
+- Mapped to phases: 87
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-22*
-*Last updated: 2026-10-22 after roadmap creation (traceability filled)*
+*Last updated: 2026-11-10: added TSK-01..09 for POPEYE_v0.4.4 (REQ-AGT-22..30); CON-04 registry fields updated*

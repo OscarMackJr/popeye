@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-11-04 - Completed quick task 261104-w3h: Vinay approved non-admin VM access for Oscar and Oleg (Oleg replaces Roger)
+Last activity: 2026-11-10 - Completed quick task 261110-a4r: POPEYE v0.4.4 agent registry, vendoring and REQ-AGT-26 CI check (PR open)
 
 Progress: [████████░░] 78%
 
@@ -112,6 +112,7 @@ None yet.
 | 261104-r8n | Record the 2026-11-04 follow-up note to networking (NET-03, NET-06, HTTPS scope) | 2026-11-04 | docs(quick-261104-r8n) | [261104-r8n-record-follow-up-note-to-networking](./quick/261104-r8n-record-follow-up-note-to-networking/) |
 | 261104-t5w | Record NET-03 done, gateway reachable from VM, NET-06 pending Vinay; fix blank run-command args | 2026-11-04 | docs(quick-261104-t5w) | [261104-t5w-record-net03-done-gateway-reachable-from-vm](./quick/261104-t5w-record-net03-done-gateway-reachable-from-vm/) |
 | 261104-w3h | Record Vinay's NET-06 approval and the Roger-to-Oleg operator change | 2026-11-04 | docs(quick-261104-w3h) | [261104-w3h-record-net06-approval-oleg-replaces-roger](./quick/261104-w3h-record-net06-approval-oleg-replaces-roger/) |
+| 261110-a4r | POPEYE v0.4.4: re-vendor vocabulary v0.5 + authz task_types/roles, agent registry and REQ-AGT-26 CI check, REQ-AGT-22..30 mapped to Phases 2/5/6 | 2026-11-10 | feat(quick-261110-a4r) | [261110-a4r-popeye-v044-registry-and-vendoring](./quick/261110-a4r-popeye-v044-registry-and-vendoring/) |
 
 ## Deferred Items
 

@@ -3,7 +3,7 @@
 Project codename: Popeye
 
 Status: Active
-Last updated: 2026-10-22
+Last updated: 2026-11-10
 Audience: future implementation agents and maintainers resuming work
 Primary post-read action: resume the next engineering task with the correct context and guardrails.
 
@@ -43,6 +43,28 @@ Non-Terraform:
 - `config/litellm.azure.example.yaml`: per-region gateway config with no-prompt-logging guardrails and registry-backed model approval comments. Fallback-chain examples remain comments until a second backend is procured.
 - `sql/ai_usage_grants.sql`: ledger bootstrap and `ekg_cube_reader` grants, promoted from the POC.
 - `scripts/provision-desktop-keys.ps1`, `scripts/intune-baseurl-profile.ps1`: Stage 3 skeletons with Graph TODOs.
+- `config/agent-registry.example.yaml`: the agent registry (`POPEYE_v0.4.4` §3, closes `POPEYE_v0.4.1` §5 O3). It holds agents (`agent_id`, `grants`, `task_types`, `purposes`, `tenants`), introspection callers (hometown, olive, sitcip, nexus), relays (hometown) and task-close owners. `scripts/Test-AgentRegistry.py` checks it in CI against the vendored contracts.
+- `config/vendored/`: fiskroad `vocabulary.yaml` v0.5, `authz/task_types.yaml` and `authz/roles.yaml`, with SHA-256 over LF in `VENDORED.md`; CI fails on drift.
+
+## POPEYE v0.4.4 (Task Binding, Agent Registry, sit-cip/Nexus Introspection)
+
+Ratified 2026-11-10 with `NONO_v0.4.4` (decisions D-3, D-4). Spec copied to `specs/POPEYE_v0.4.4.md`. Mapped in `.planning/REQUIREMENTS.md` as TSK-01..09: REQ-AGT-26 to Phase 2, REQ-AGT-22..25 to Phase 5, REQ-AGT-27..30 to Phase 6.
+
+The exchange (`POPEYE_v0.4.1` §2), introspection (`POPEYE_v0.4.2` §2), task close and the gateway hook that writes ledger fields are **not built yet** (Phases 3, 5, 6). Only the registry and its CI check exist, so only REQ-AGT-26 is implemented.
+
+| REQ | Status | What the test shows |
+|---|---|---|
+| REQ-AGT-22 | Not measured: issuer not built | Exchange refusals for missing binding, malformed `task_id`, unregistered `task_type` need the Phase 5 issuer. The registry already lists each agent's permitted task types for it to check |
+| REQ-AGT-23 | Not measured: issuer not built | `task_expires_at` clamp is Phase 5 issuer logic |
+| REQ-AGT-24 | Not measured: issuer not built | No popeye path exists yet, so none accepts a task change; the test needs the issuer's API surface |
+| REQ-AGT-25 | Not measured: issuer not built | Ledger `task_id`/`task_type` need the Phase 3 hook and Phase 5 issuer; live verifier |
+| REQ-AGT-26 | **Implemented (CI)** | `scripts/Test-AgentRegistry.py` passes on the registry and rejects 10 negative fixtures, one per rule: unregistered task type, malformed task type, invented purpose, non-agent grant, non-UUID tenant, a capability field on an agent, sitcip as relay, nexus not a caller, wrong close owner, missing close rule. A vendored file that drifts from its recorded hash also fails |
+| REQ-AGT-27 | Not measured: issuer not built | Close-owner map is in the registry and CI-checked (each task type closed only by its own system; `nono.coding_session` by session-end revocation). The close endpoint is Phase 6 |
+| REQ-AGT-28 | Not measured: issuer not built | Needs introspection and gateway refusal (Phases 3, 6) |
+| REQ-AGT-29 | Not measured: issuer not built | Needs introspection and caching sit-cip/Nexus stubs (Phase 6) |
+| REQ-AGT-30 | Not measured: issuer not built | sitcip and nexus are registered callers and not relays; CI fails if either is dropped as a caller or added as a relay. The runtime introspection and relay-refusal tests are Phase 6 |
+
+Registry seed values for `liam` (grants, purposes, tenant) are POC values pending program confirmation. Agents, grants, task types, callers and relays change only by program decision.
 
 ## Next Task
 

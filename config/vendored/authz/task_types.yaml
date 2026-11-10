@@ -1,0 +1,27 @@
+# Registered task types — the seed list for popeye's agent registry.
+# Owning spec: specs/PROGRAM_SHARED_VOCABULARY_v0.5.md §5
+# Ratified by: DECISION_task-vocabulary.md (D-2), DECISION_task-binding-on-agent-key.md (D-3)
+#
+# popeye mints task_type only from its registry; this file is the program
+# source of truth the registry is checked against. Adding a task type is a
+# change-managed event, not configuration. Every task_type used in
+# contracts/authz/policies/ must appear here (tools/authz_check.py).
+version: 0.1
+
+task_types:
+  - name: nono.coding_session
+    system: nono
+    anchor: agent session (session_id / run_id)
+    closes_when: session ends (nono revokes the agent key)
+  - name: sitcip.investigation
+    system: sitcip
+    anchor: InvestigationThread or ValidationTicket
+    closes_when: thread closed or reviewed, or ticket resolved
+  - name: nexus.deal_review
+    system: nexus
+    anchor: Nexus Task (assignee_id, deal_id)
+    closes_when: Task completed
+  - name: olive.proposal
+    system: olive
+    anchor: proposal_id (single use)
+    closes_when: proposal executed, rejected or expired
