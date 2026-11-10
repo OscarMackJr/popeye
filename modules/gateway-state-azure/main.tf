@@ -39,6 +39,11 @@ resource "azurerm_postgresql_flexible_server" "gateway" {
 
   lifecycle {
     prevent_destroy = true
+    # Azure swaps primary and standby zones on an HA failover. Without
+    # this, the next apply forces a failback (seen 2026-11-08: primary
+    # in zone 1, standby in zone 3). This follows azurerm provider
+    # guidance for zone-redundant flexible servers.
+    ignore_changes = [zone, high_availability[0].standby_availability_zone]
   }
 }
 
