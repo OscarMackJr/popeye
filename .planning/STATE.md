@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-11-04 - Completed quick task 261104-w3h: Vinay approved non-admin VM access for Oscar and Oleg (Oleg replaces Roger)
+Last activity: 2026-11-11 - NET-06 verified and ticked (control plane PASS; Bastion sign-in by both operators)
 
 Progress: [████████░░] 78%
 
@@ -86,6 +86,7 @@ None yet.
   - 2026-11-04 (Vinay): approved Oscar and Oleg on the VM as non-admins. Oleg replaces Roger as the second operator. The NET-06 RBAC change has been requested from networking.
   - 2026-11-10: Networking applied NET-06. Oscar moved from Administrator Login to User Login; Oleg has User Login plus Reader on the VM, NIC and Bastion; Roger's access was removed. Outbound HTTPS is unchanged for the ceremony. Our verification (`Test-PopeyeAzureVerificationVm.ps1` plus a Bastion sign-in by each operator) is pending; NET-06 stays unticked until it passes.
   - 2026-11-10 (verified): `Test-PopeyeAzureVerificationVm.ps1` (after the 261110-mxi fix) shows NET-01/02/05/06 PASS: only the two operators hold VM User Login, with no Administrator Login. NET-06 is ticked once both operators have signed in through Bastion. NET-03 FAIL: the env DNS zone is not linked to `vnet-popeye-stage1-stage2-eastus2` (caller VNet link fine; ceremony not blocked). To raise with networking.
+  - 2026-11-11: NET-06 PASS and ticked. Control-plane re-run PASS with bare UPNs, and both Oscar and Oleg signed in with Entra through Bastion to EUS-VM-POPEYE in non-admin sessions (`artifacts/popeye-phase1-preflight-2026-10-22.md`). Plan 01-08 has no hard gates left. Open: Security's written view on the temporary outbound rule (non-blocking per networking), and whether the CTO demo shows 422 (LiteLLM 1.106) or 429 (TC-GOV-01) on budget exhaustion.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
@@ -97,7 +98,7 @@ None yet.
   - a Container Apps environment private DNS zone (`ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` → 10.60.0.108), linked to both VNets; without it the gateway FQDN does not resolve and the smoke test is blocked;
   - removing the internet-sourced RDP rule `Allow_Iliya_Promenet`;
   - User Login for both approved operators.
-- `EUS-VM-POPEYE` login (NET-06): 2026-11-04, Vinay approved non-admin access for Oscar and Oleg (Oleg replaced Roger). Networking applied the change on 2026-11-10, and the control-plane check PASSes. Bastion sign-in by both operators is pending.
+- `EUS-VM-POPEYE` login (NET-06): 2026-11-04, Vinay approved non-admin access for Oscar and Oleg (Oleg replaced Roger). Networking applied the change on 2026-11-10, and the control-plane check PASSes. Both operators signed in through Bastion on 2026-11-11 (non-admin); NET-06 ticked.
 - Program/nono decisions needed early in Phase 2: G11 (`on_behalf_of` format, one-way door), G2 (budget model, before any fleet mint), the `direct_gateway` default, and the G3 admin-revocation carve-out (OPS-03 depends on it).
 - Hook internals are LOW confidence until the Phase 3 spike, which gates the Phase 5 metadata contract.
 - The 60s revocation bound may be read as end-to-end (about 120s worst case). Clarify with nono, hometown and olive before Phase 6.

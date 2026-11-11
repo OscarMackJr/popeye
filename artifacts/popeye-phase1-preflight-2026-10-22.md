@@ -214,14 +214,18 @@ net-06: control plane PASS; Bastion sign-in by both operators pending
 
 ## NET-06 Bastion sign-in verification (2026-11-11)
 
-net-06: control plane PASS; Oscar sign-in PASS; Oleg sign-in pending
+net-06: PASS
 
 - Oscar, Entra sign-in through EUS-POPEY-BASTION, 2026-11-11 18:01 UTC:
   - `hostname`: EUS-VM-POPEYE
   - `whoami`: twgglobal\omack; `whoami /upn`: omack@twgglobal.com
   - Administrators (`S-1-5-32-544`): not in token; `IsInRole('Administrators')`: False
   - `dsregcmd /status`: AzureAdJoined YES
-- Oleg: pending (same checks, including `hostname`).
+- Oleg, Entra sign-in through EUS-POPEY-BASTION, reported 2026-11-11 (no UTC time captured: `Get-Date -AsUTC` is not available in the VM's Windows PowerShell 5.1):
+  - `hostname`: EUS-VM-POPEYE
+  - `whoami`: twgglobal\oboksner; `whoami /upn`: oboksner@twgglobal.com
+  - Administrators (`S-1-5-32-544`): not in token; `IsInRole('Administrators')`: False
+  - `dsregcmd /status`: AzureAdJoined YES
 - Control-plane re-run 2026-11-11 17:54 UTC (`Test-PopeyeAzureVerificationVm.ps1` with bare UPNs `omack@twgglobal.com`, `oboksner@twgglobal.com`): all four NET-06 rows PASS. Exactly those two principals hold Virtual Machine User Login at VM scope; nobody holds Administrator Login. Evidence: `artifacts/popeye-azure-verification-evidence.json`. NET-03 still FAIL (env zone not linked to the Popeye VNet; known, not ceremony-blocking).
 - An earlier run that day passed the UPNs wrapped in angle brackets and reported false NET-06 FAILs. The script now refuses `<` or `>` in operator names.
-- NET-06 is ticked once Oleg's sign-in is recorded.
+- NET-06 ticked 2026-11-11: both approved operators sign in with Entra through Bastion in non-admin sessions, and they are the only holders of VM login roles.
