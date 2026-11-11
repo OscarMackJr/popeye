@@ -49,6 +49,11 @@ $ErrorActionPreference = 'Stop'
 if (@($ApprovedOperatorDisplayNames | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count -lt 2) {
   throw 'NET-06: -ApprovedOperatorDisplayNames must contain both approved operators.'
 }
+# A placeholder copied with its brackets ('<oscar upn>') never matches a principalName and yields misleading FAIL rows.
+$bracketed = @($ApprovedOperatorDisplayNames | Where-Object { $_ -match '[<>]' })
+if ($bracketed.Count -gt 0) {
+  throw "NET-06: -ApprovedOperatorDisplayNames contains '<' or '>' ($($bracketed -join ', ')). Pass bare UPNs, e.g. 'name@example.com'."
+}
 if ([string]::IsNullOrWhiteSpace($CallerResourceGroupName)) { $CallerResourceGroupName = $PopeyeResourceGroupName }
 if ([string]::IsNullOrWhiteSpace($VmResourceGroupName)) { $VmResourceGroupName = $CallerResourceGroupName }
 
