@@ -88,6 +88,7 @@ None yet.
   - 2026-11-10 (verified): `Test-PopeyeAzureVerificationVm.ps1` (after the 261110-mxi fix) shows NET-01/02/05/06 PASS: only the two operators hold VM User Login, with no Administrator Login. NET-06 is ticked once both operators have signed in through Bastion. NET-03 FAIL: the env DNS zone is not linked to `vnet-popeye-stage1-stage2-eastus2` (caller VNet link fine; ceremony not blocked). To raise with networking.
   - 2026-11-11: NET-06 PASS and ticked. Control-plane re-run PASS with bare UPNs, and both Oscar and Oleg signed in with Entra through Bastion to EUS-VM-POPEYE in non-admin sessions (`artifacts/popeye-phase1-preflight-2026-10-22.md`). Plan 01-08 has no hard gates left. Open: Security's written view on the temporary outbound rule (non-blocking per networking), and whether the CTO demo shows 422 (LiteLLM 1.106) or 429 (TC-GOV-01) on budget exhaustion.
   - 2026-11-11 (later): Networking linked the env DNS zone to `vnet-popeye-stage1-stage2-eastus2`, so it is now linked to both VNets (auto-registration off) and resolves to 10.60.0.108 per their check. Our `Test-PopeyeAzureVerificationVm.ps1` re-run is pending; NET-03 is ticked in 01-09 once it PASSes.
+  - 2026-11-11 (verified): `Test-PopeyeAzureVerificationVm.ps1` re-run at 21:50 UTC passes all 16 checks, NET-03 included (no VNet missing a link). There are no open network asks for Phase 1. NET-03 is ticked in 01-09.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
@@ -120,6 +121,7 @@ None yet.
 | 261110-mxi | Fix strict-mode property errors in Test-PopeyeAzureVerificationVm.ps1 and isolate NET-06 checks | 2026-11-10 | fix(quick-261110-mxi) | [261110-mxi-fix-strict-mode-property-errors-in-test-](./quick/261110-mxi-fix-strict-mode-property-errors-in-test-/) |
 | 261110-n1z | Record NET-06 control-plane verification PASS and NET-03 Popeye VNet link gap | 2026-11-10 | docs(quick-261110-n1z) | [261110-n1z-record-net-06-control-plane-verification](./quick/261110-n1z-record-net-06-control-plane-verification/) |
 | 261111-ncf | Record networking's NET-03 Popeye VNet link completion; our re-run pending | 2026-11-11 | docs(quick-261111-ncf) | [261111-ncf-record-networking-net-03-second-vnet-lin](./quick/261111-ncf-record-networking-net-03-second-vnet-lin/) |
+| 261111-nhn | Record NET-03 verification PASS (env zone linked to both VNets) | 2026-11-11 | docs(quick-261111-nhn) | [261111-nhn-record-net-03-verification-pass](./quick/261111-nhn-record-net-03-verification-pass/) |
 
 ## Deferred Items
 

@@ -1,180 +1,180 @@
-﻿{
-    "validationUtc":  "2026-11-11T17:54:29.9273845Z",
-    "subscriptionId":  "98c2b71b-539f-4801-9c37-229efa10beda",
-    "postgresFqdn":  "pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com",
-    "popeyeVnet":  {
-                       "name":  "vnet-popeye-stage1-stage2-eastus2",
-                       "id":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-popeye-stage1-stage2-eastus2",
-                       "resourceGroup":  "rg-popeye-stage1-stage2-eastus2",
-                       "addressPrefixes":  [
-                                               "10.60.0.0/22"
-                                           ]
-                   },
-    "callerVnet":  {
-                       "name":  "EUS-POPEYE-VNET-01",
-                       "id":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VNET-01/providers/Microsoft.Network/virtualNetworks/EUS-POPEYE-VNET-01",
-                       "resourceGroup":  "EUS-RG-POPEYE-VNET-01",
-                       "addressPrefixes":  [
-                                               "10.10.0.0/16"
-                                           ]
-                   },
-    "peerings":  [
-                     {
-                         "vnet":  "vnet-popeye-stage1-stage2-eastus2",
-                         "name":  "vnet-popeye-stage1-stage2-eastus2_to_EUS-POPEYE-VNET-01",
-                         "peeringState":  "Connected",
-                         "peeringSyncLevel":  "FullyInSync",
-                         "allowVirtualNetworkAccess":  true
-                     },
-                     {
-                         "vnet":  "EUS-POPEYE-VNET-01",
-                         "name":  "EUS-POPEYE-VNET-01_to_vnet-popeye-stage1-stage2-eastus2",
-                         "peeringState":  "Connected",
-                         "peeringSyncLevel":  "FullyInSync",
-                         "allowVirtualNetworkAccess":  true
-                     }
-                 ],
-    "peeringOwnership":  {
-                             "detail":  "ownership: networking-owned (not in Terraform state)",
-                             "stateCheck":  "no peering in state"
-                         },
-    "postgres":  {
-                     "id":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.DBforPostgreSQL/flexibleServers/pg-popeye-stage1-stage2-eastus2",
-                     "fqdn":  "pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com",
-                     "publicNetworkAccess":  "Disabled",
-                     "delegatedSubnetId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-popeye-stage1-stage2-eastus2/subnets/snet-postgres",
-                     "privateDnsZoneId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com"
-                 },
-    "privateDns":  {
-                       "zoneName":  "privatelink.postgres.database.azure.com",
-                       "zoneId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com",
-                       "links":  [
-                                     {
-                                         "name":  "link-eus-popeye-vnet-01",
-                                         "virtualNetworkId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VNET-01/providers/Microsoft.Network/virtualNetworks/EUS-POPEYE-VNET-01",
-                                         "registrationEnabled":  false
-                                     },
-                                     {
-                                         "name":  "pg-vnet-link",
-                                         "virtualNetworkId":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-popeye-stage1-stage2-eastus2",
-                                         "registrationEnabled":  false
-                                     }
-                                 ]
-                   },
-    "containerAppsEnvironment":  {
-                                     "name":  "popeye-stage1-stage2-eastus2-env",
-                                     "defaultDomain":  "ashyglacier-edb44cd7.eastus2.azurecontainerapps.io",
-                                     "staticIp":  "10.60.0.108",
-                                     "zoneResourceGroup":  "EUS-RG-POPEYE-VM-01"
-                                 },
-    "vm":  {
-               "id":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VM-01/providers/Microsoft.Compute/virtualMachines/EUS-VM-POPEYE",
-               "name":  "EUS-VM-POPEYE",
-               "location":  "eastus",
-               "powerState":  "VM running",
-               "osType":  "Windows"
-           },
-    "bastionSubnet":  {
-                          "name":  "AzureBastionSubnet",
-                          "prefix":  "10.10.3.0/26"
-                      },
-    "networkSecurityGroups":  [
-                                  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VNET-01/providers/Microsoft.Network/networkSecurityGroups/EUS-POPEYE-NSG"
-                              ],
-    "vmLoginAssignments":  [
-                               {
-                                   "principalName":  "OMack@twgglobal.com",
-                                   "principalType":  "User",
-                                   "roleDefinitionName":  "Virtual Machine User Login",
-                                   "scope":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VM-01/providers/Microsoft.Compute/virtualMachines/EUS-VM-POPEYE"
-                               },
-                               {
-                                   "principalName":  "oboksner@twgglobal.com",
-                                   "principalType":  "User",
-                                   "roleDefinitionName":  "Virtual Machine User Login",
-                                   "scope":  "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VM-01/providers/Microsoft.Compute/virtualMachines/EUS-VM-POPEYE"
-                               }
-                           ],
-    "checks":  [
-                   {
-                       "Check":  "Popeye VNet located",
-                       "Status":  "PASS",
-                       "Detail":  "vnet-popeye-stage1-stage2-eastus2 in rg-popeye-stage1-stage2-eastus2"
-                   },
-                   {
-                       "Check":  "Caller VNet located",
-                       "Status":  "PASS",
-                       "Detail":  "EUS-POPEYE-VNET-01 in EUS-RG-POPEYE-VNET-01"
-                   },
-                   {
-                       "Check":  "NET-01 peering Connected and FullyInSync both ways",
-                       "Status":  "PASS",
-                       "Detail":  "vnet-popeye-stage1-stage2-eastus2/vnet-popeye-stage1-stage2-eastus2_to_EUS-POPEYE-VNET-01: state=Connected sync=FullyInSync allowVnetAccess=True; EUS-POPEYE-VNET-01/EUS-POPEYE-VNET-01_to_vnet-popeye-stage1-stage2-eastus2: state=Connected sync=FullyInSync allowVnetAccess=True"
-                   },
-                   {
-                       "Check":  "NET-01 peering ownership recorded",
-                       "Status":  "PASS",
-                       "Detail":  "ownership: networking-owned (not in Terraform state)"
-                   },
-                   {
-                       "Check":  "NET-02 Postgres private DNS zone linked to both VNets",
-                       "Status":  "PASS",
-                       "Detail":  "zone=privatelink.postgres.database.azure.com; linked VNets: EUS-POPEYE-VNET-01, vnet-popeye-stage1-stage2-eastus2; missing: "
-                   },
-                   {
-                       "Check":  "NET-02 PostgreSQL public network access disabled",
-                       "Status":  "PASS",
-                       "Detail":  "publicNetworkAccess=Disabled"
-                   },
-                   {
-                       "Check":  "NET-03 environment private DNS zone, records and links",
-                       "Status":  "FAIL",
-                       "Detail":  "zone=ashyglacier-edb44cd7.eastus2.azurecontainerapps.io; wildcard A ok=True; apex A ok=True; VNets missing link: vnet-popeye-stage1-stage2-eastus2"
-                   },
-                   {
-                       "Check":  "Verification VM runs Windows",
-                       "Status":  "PASS",
-                       "Detail":  "osType=Windows"
-                   },
-                   {
-                       "Check":  "NET-05 VM has no public IP",
-                       "Status":  "PASS",
-                       "Detail":  "NICs: eus-vm-popeye402"
-                   },
-                   {
-                       "Check":  "NET-05 Bastion subnet is /26 or larger",
-                       "Status":  "PASS",
-                       "Detail":  "Subnet AzureBastionSubnet prefix: 10.10.3.0/26"
-                   },
-                   {
-                       "Check":  "NET-05 RDP 3389 NSG source limited to Bastion subnet",
-                       "Status":  "PASS",
-                       "Detail":  "Non-Bastion allow rules: "
-                   },
-                   {
-                       "Check":  "NET-05 Entra ID Windows sign-in extension enabled",
-                       "Status":  "PASS",
-                       "Detail":  "Extensions: Microsoft.Azure.ActiveDirectory/AADLoginForWindows"
-                   },
-                   {
-                       "Check":  "NET-06 VM User Login limited to approved operators",
-                       "Status":  "PASS",
-                       "Detail":  "Unapproved holders: "
-                   },
-                   {
-                       "Check":  "NET-06 operator omack@twgglobal.com holds VM User Login",
-                       "Status":  "PASS",
-                       "Detail":  "Virtual Machine User Login at VM scope: True"
-                   },
-                   {
-                       "Check":  "NET-06 operator oboksner@twgglobal.com holds VM User Login",
-                       "Status":  "PASS",
-                       "Detail":  "Virtual Machine User Login at VM scope: True"
-                   },
-                   {
-                       "Check":  "NET-06 no Virtual Machine Administrator Login unless approved",
-                       "Status":  "PASS",
-                       "Detail":  "No administrator login assignments."
-                   }
-               ]
+{
+  "validationUtc": "2026-11-11T21:50:28.5868606Z",
+  "subscriptionId": "98c2b71b-539f-4801-9c37-229efa10beda",
+  "postgresFqdn": "pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com",
+  "popeyeVnet": {
+    "name": "vnet-popeye-stage1-stage2-eastus2",
+    "id": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-popeye-stage1-stage2-eastus2",
+    "resourceGroup": "rg-popeye-stage1-stage2-eastus2",
+    "addressPrefixes": [
+      "10.60.0.0/22"
+    ]
+  },
+  "callerVnet": {
+    "name": "EUS-POPEYE-VNET-01",
+    "id": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VNET-01/providers/Microsoft.Network/virtualNetworks/EUS-POPEYE-VNET-01",
+    "resourceGroup": "EUS-RG-POPEYE-VNET-01",
+    "addressPrefixes": [
+      "10.10.0.0/16"
+    ]
+  },
+  "peerings": [
+    {
+      "vnet": "vnet-popeye-stage1-stage2-eastus2",
+      "name": "vnet-popeye-stage1-stage2-eastus2_to_EUS-POPEYE-VNET-01",
+      "peeringState": "Connected",
+      "peeringSyncLevel": "FullyInSync",
+      "allowVirtualNetworkAccess": true
+    },
+    {
+      "vnet": "EUS-POPEYE-VNET-01",
+      "name": "EUS-POPEYE-VNET-01_to_vnet-popeye-stage1-stage2-eastus2",
+      "peeringState": "Connected",
+      "peeringSyncLevel": "FullyInSync",
+      "allowVirtualNetworkAccess": true
+    }
+  ],
+  "peeringOwnership": {
+    "detail": "ownership: networking-owned (not in Terraform state)",
+    "stateCheck": "no peering in state"
+  },
+  "postgres": {
+    "id": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.DBforPostgreSQL/flexibleServers/pg-popeye-stage1-stage2-eastus2",
+    "fqdn": "pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com",
+    "publicNetworkAccess": "Disabled",
+    "delegatedSubnetId": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-popeye-stage1-stage2-eastus2/subnets/snet-postgres",
+    "privateDnsZoneId": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com"
+  },
+  "privateDns": {
+    "zoneName": "privatelink.postgres.database.azure.com",
+    "zoneId": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com",
+    "links": [
+      {
+        "name": "link-eus-popeye-vnet-01",
+        "virtualNetworkId": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VNET-01/providers/Microsoft.Network/virtualNetworks/EUS-POPEYE-VNET-01",
+        "registrationEnabled": false
+      },
+      {
+        "name": "pg-vnet-link",
+        "virtualNetworkId": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/rg-popeye-stage1-stage2-eastus2/providers/Microsoft.Network/virtualNetworks/vnet-popeye-stage1-stage2-eastus2",
+        "registrationEnabled": false
+      }
+    ]
+  },
+  "containerAppsEnvironment": {
+    "name": "popeye-stage1-stage2-eastus2-env",
+    "defaultDomain": "ashyglacier-edb44cd7.eastus2.azurecontainerapps.io",
+    "staticIp": "10.60.0.108",
+    "zoneResourceGroup": "EUS-RG-POPEYE-VM-01"
+  },
+  "vm": {
+    "id": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VM-01/providers/Microsoft.Compute/virtualMachines/EUS-VM-POPEYE",
+    "name": "EUS-VM-POPEYE",
+    "location": "eastus",
+    "powerState": "VM running",
+    "osType": "Windows"
+  },
+  "bastionSubnet": {
+    "name": "AzureBastionSubnet",
+    "prefix": "10.10.3.0/26"
+  },
+  "networkSecurityGroups": [
+    "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VNET-01/providers/Microsoft.Network/networkSecurityGroups/EUS-POPEYE-NSG"
+  ],
+  "vmLoginAssignments": [
+    {
+      "principalName": "OMack@twgglobal.com",
+      "principalType": "User",
+      "roleDefinitionName": "Virtual Machine User Login",
+      "scope": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VM-01/providers/Microsoft.Compute/virtualMachines/EUS-VM-POPEYE"
+    },
+    {
+      "principalName": "oboksner@twgglobal.com",
+      "principalType": "User",
+      "roleDefinitionName": "Virtual Machine User Login",
+      "scope": "/subscriptions/98c2b71b-539f-4801-9c37-229efa10beda/resourceGroups/EUS-RG-POPEYE-VM-01/providers/Microsoft.Compute/virtualMachines/EUS-VM-POPEYE"
+    }
+  ],
+  "checks": [
+    {
+      "Check": "Popeye VNet located",
+      "Status": "PASS",
+      "Detail": "vnet-popeye-stage1-stage2-eastus2 in rg-popeye-stage1-stage2-eastus2"
+    },
+    {
+      "Check": "Caller VNet located",
+      "Status": "PASS",
+      "Detail": "EUS-POPEYE-VNET-01 in EUS-RG-POPEYE-VNET-01"
+    },
+    {
+      "Check": "NET-01 peering Connected and FullyInSync both ways",
+      "Status": "PASS",
+      "Detail": "vnet-popeye-stage1-stage2-eastus2/vnet-popeye-stage1-stage2-eastus2_to_EUS-POPEYE-VNET-01: state=Connected sync=FullyInSync allowVnetAccess=True; EUS-POPEYE-VNET-01/EUS-POPEYE-VNET-01_to_vnet-popeye-stage1-stage2-eastus2: state=Connected sync=FullyInSync allowVnetAccess=True"
+    },
+    {
+      "Check": "NET-01 peering ownership recorded",
+      "Status": "PASS",
+      "Detail": "ownership: networking-owned (not in Terraform state)"
+    },
+    {
+      "Check": "NET-02 Postgres private DNS zone linked to both VNets",
+      "Status": "PASS",
+      "Detail": "zone=privatelink.postgres.database.azure.com; linked VNets: EUS-POPEYE-VNET-01, vnet-popeye-stage1-stage2-eastus2; missing: "
+    },
+    {
+      "Check": "NET-02 PostgreSQL public network access disabled",
+      "Status": "PASS",
+      "Detail": "publicNetworkAccess=Disabled"
+    },
+    {
+      "Check": "NET-03 environment private DNS zone, records and links",
+      "Status": "PASS",
+      "Detail": "zone=ashyglacier-edb44cd7.eastus2.azurecontainerapps.io; wildcard A ok=True; apex A ok=True; VNets missing link: "
+    },
+    {
+      "Check": "Verification VM runs Windows",
+      "Status": "PASS",
+      "Detail": "osType=Windows"
+    },
+    {
+      "Check": "NET-05 VM has no public IP",
+      "Status": "PASS",
+      "Detail": "NICs: eus-vm-popeye402"
+    },
+    {
+      "Check": "NET-05 Bastion subnet is /26 or larger",
+      "Status": "PASS",
+      "Detail": "Subnet AzureBastionSubnet prefix: 10.10.3.0/26"
+    },
+    {
+      "Check": "NET-05 RDP 3389 NSG source limited to Bastion subnet",
+      "Status": "PASS",
+      "Detail": "Non-Bastion allow rules: "
+    },
+    {
+      "Check": "NET-05 Entra ID Windows sign-in extension enabled",
+      "Status": "PASS",
+      "Detail": "Extensions: Microsoft.Azure.ActiveDirectory/AADLoginForWindows"
+    },
+    {
+      "Check": "NET-06 VM User Login limited to approved operators",
+      "Status": "PASS",
+      "Detail": "Unapproved holders: "
+    },
+    {
+      "Check": "NET-06 operator omack@twgglobal.com holds VM User Login",
+      "Status": "PASS",
+      "Detail": "Virtual Machine User Login at VM scope: True"
+    },
+    {
+      "Check": "NET-06 operator oboksner@twgglobal.com holds VM User Login",
+      "Status": "PASS",
+      "Detail": "Virtual Machine User Login at VM scope: True"
+    },
+    {
+      "Check": "NET-06 no Virtual Machine Administrator Login unless approved",
+      "Status": "PASS",
+      "Detail": "No administrator login assignments."
+    }
+  ]
 }

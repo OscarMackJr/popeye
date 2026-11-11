@@ -236,3 +236,6 @@ net-03: networking reports done; our verification pending
 
 - Networking (2026-11-11) linked the env zone `ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` to `vnet-popeye-stage1-stage2-eastus2`. It is now linked to both `EUS-POPEYE-VNET-01` and `vnet-popeye-stage1-stage2-eastus2`, with auto-registration disabled on both links. Networking checked resolution: the Container Apps hostname resolves to 10.60.0.108.
 - Our check: re-run `scripts/Test-PopeyeAzureVerificationVm.ps1` and expect NET-03 PASS (both links present, records → 10.60.0.108). NET-03 is ticked in 01-09 with that evidence.
+- Verified 2026-11-11 21:50 UTC: `Test-PopeyeAzureVerificationVm.ps1` (same arguments as the NET-06 re-run) passed all 16 checks. NET-03 detail: wildcard A ok, apex A ok, and no VNet is missing a link. NET-01, NET-02, NET-05 and NET-06 are still PASS. Evidence: `artifacts/popeye-azure-verification-evidence.json`.
+
+net-03: PASS (checkbox ticked in 01-09 with the evidence index)
