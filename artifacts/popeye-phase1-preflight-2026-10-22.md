@@ -229,3 +229,10 @@ net-06: PASS
 - Control-plane re-run 2026-11-11 17:54 UTC (`Test-PopeyeAzureVerificationVm.ps1` with bare UPNs `omack@twgglobal.com`, `oboksner@twgglobal.com`): all four NET-06 rows PASS. Exactly those two principals hold Virtual Machine User Login at VM scope; nobody holds Administrator Login. Evidence: `artifacts/popeye-azure-verification-evidence.json`. NET-03 still FAIL (env zone not linked to the Popeye VNet; known, not ceremony-blocking).
 - An earlier run that day passed the UPNs wrapped in angle brackets and reported false NET-06 FAILs. The script now refuses `<` or `>` in operator names.
 - NET-06 ticked 2026-11-11: both approved operators sign in with Entra through Bastion in non-admin sessions, and they are the only holders of VM login roles.
+
+## NET-03 Popeye VNet link (2026-11-11)
+
+net-03: networking reports done; our verification pending
+
+- Networking (2026-11-11) linked the env zone `ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` to `vnet-popeye-stage1-stage2-eastus2`. It is now linked to both `EUS-POPEYE-VNET-01` and `vnet-popeye-stage1-stage2-eastus2`, with auto-registration disabled on both links. Networking checked resolution: the Container Apps hostname resolves to 10.60.0.108.
+- Our check: re-run `scripts/Test-PopeyeAzureVerificationVm.ps1` and expect NET-03 PASS (both links present, records → 10.60.0.108). NET-03 is ticked in 01-09 with that evidence.

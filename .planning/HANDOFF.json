@@ -57,8 +57,8 @@
       "blocking": false
     },
     {
-      "action": "Networking: link env DNS zone ashyglacier-edb44cd7.eastus2.azurecontainerapps.io to vnet-popeye-stage1-stage2-eastus2 (NET-03)",
-      "context": "2026-11-10 verification: zone linked to caller VNet only; not ceremony-blocking",
+      "action": "Re-run Test-PopeyeAzureVerificationVm.ps1 to confirm NET-03 PASS (env zone linked to both VNets)",
+      "context": "networking linked the zone to vnet-popeye-stage1-stage2-eastus2 on 2026-11-11; not ceremony-blocking; tick in 01-09",
       "blocking": false
     }
   ],
@@ -87,6 +87,6 @@
   "uncommitted_files": [
     "scripts/Test-PopeyeAzureVerificationVm.zip (untracked, intentionally not committed)"
   ],
-  "next_action": "Get Bastion sign-in confirmation from Oscar and Oleg, record it, tick NET-06 in REQUIREMENTS.md, then /gsd-execute-phase 1 for 01-08 Task 2 (interactive Bastion ceremony). Chase networking for the NET-03 Popeye VNet link (needed before 01-09).",
+  "next_action": "NET-06 is ticked (2026-11-11). Run /gsd-execute-phase 1 for 01-08 Task 2 (interactive Bastion ceremony). Re-run Test-PopeyeAzureVerificationVm.ps1 to confirm NET-03 PASS now that networking linked the zone to both VNets (2026-11-11).",
   "context_notes": "Work since 2026-10-23 ran as quick tasks 261027-j3d..261104-w3h (see STATE.md Quick Tasks and artifacts/popeye-phase1-preflight-2026-10-22.md). All pushed to origin/main; gateway re-pinned to LiteLLM v1.106.7 by PR #3 (b9be2ba). Postgres now resolves to 10.60.2.4 (was .5). Gateway FQDN popeye-stage1-stage2-eastus2-app.internal.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io; env staticIp 10.60.0.108. VM RG EUS-RG-POPEYE-VM-01; VM 10.10.2.4 in EUS-POPEYE-VNET-01/EUS-POPEYE-VNET-02. Caller VNet EUS-POPEYE-VNET-01 is in RG EUS-RG-POPEYE-VNET-01 (VM subnet named EUS-POPEYE-VNET-02); pass operator UPNs to -ApprovedOperatorDisplayNames."
 }
