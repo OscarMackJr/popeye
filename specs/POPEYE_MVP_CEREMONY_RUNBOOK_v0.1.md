@@ -107,6 +107,8 @@ ContainerAppConsoleLogs_CL
 
 Zero rows (with some completions sent in that window) means neither method can attribute requests to replicas. Step 8.6 then records a gap, and the cross-replica proof relies on the shared Redis counter keys and a consistent 422.
 
+**Result 2026-11-14, inconclusive.** A 30-day query found console logs reaching the workspace from every replica: thousands of lines per replica, newest 2026-11-11, with `ContainerGroupName_s` naming the replica. None of them is a `chat/completions` line. But no completion had ever been sent through the gateway (the 11-08 upgrade evidence has health probes only), so zero completion lines doesn't show whether completions get logged. This is settled during the ceremony in step 8.6, which runs a log query right after step 8.4's 12 completions.
+
 ### 0e. Pre-checks before T0
 
 1. **Key Vault audit logging is on.** The gateway vault's `AuditEvent` diagnostic setting (`popeye-stage1-stage2-eastus2-kv-diag`, added 2026-11-14 in `modules/gateway-observability-azure`) must be applied before the grant window. Without it, step 10.4 reads nothing. Confirm it on the workstation:
@@ -116,7 +118,7 @@ Zero rows (with some completions sent in that window) means neither method can a
    ```
 
    Expect `popeye-stage1-stage2-eastus2-kv-diag`.
-2. **The 0d log check is done**, and you know which method step 8.6 will use.
+2. **The 0d log check is done.** Done 2026-11-14: inconclusive, and settled in step 8.6.
 
 ---
 
@@ -261,6 +263,18 @@ Expect `t`. If it prints `f`, LiteLLM can't price the Foundry deployment: the co
    ```
 
    If that finds nothing, use the fallback in 0d.
+
+   First, settle 0d. Wait about 5 minutes for ingestion after step 8.4, then run this in the portal:
+
+   ```
+   ContainerAppConsoleLogs_CL
+   | where TimeGenerated > ago(30m)
+   | summarize total_lines = count(), completion_lines = countif(Log_s has "chat/completions") by ContainerGroupName_s
+   ```
+
+   - If `total_lines` is 0 for every replica, ingestion is lagging. Wait and run it again; an empty read is not a result.
+   - If `completion_lines` is 0 while `total_lines` is above 0, completions aren't logged at `LITELLM_LOG=ERROR`. Record a gap for per-replica attribution. The cross-replica evidence is then the step 8.2 replica count, the step 8.5 before and after Redis key-name counts, and a consistent 422 in the budget probe.
+   - If `completion_lines` is above 0, use the per-replica counts. Check whether the lines carry the request IDs from `$x.RequestIds`, and record which method you used.
 
 Record replica labels (replica-1, replica-2), the request count per replica, and the before and after key-name counts.
 
