@@ -89,6 +89,7 @@ None yet.
   - 2026-11-11: NET-06 PASS and ticked. Control-plane re-run PASS with bare UPNs, and both Oscar and Oleg signed in with Entra through Bastion to EUS-VM-POPEYE in non-admin sessions (`artifacts/popeye-phase1-preflight-2026-10-22.md`). Plan 01-08 has no hard gates left. Open: Security's written view on the temporary outbound rule (non-blocking per networking), and whether the CTO demo shows 422 (LiteLLM 1.106) or 429 (TC-GOV-01) on budget exhaustion.
   - 2026-11-11 (later): Networking linked the env DNS zone to `vnet-popeye-stage1-stage2-eastus2`, so it is now linked to both VNets (auto-registration off) and resolves to 10.60.0.108 per their check. Our `Test-PopeyeAzureVerificationVm.ps1` re-run is pending; NET-03 is ticked in 01-09 once it PASSes.
   - 2026-11-11 (verified): `Test-PopeyeAzureVerificationVm.ps1` re-run at 21:50 UTC passes all 16 checks, NET-03 included (no VNet missing a link). There are no open network asks for Phase 1. NET-03 is ticked in 01-09.
+  - 2026-11-14: Ceremony runbook reviewed and fixed (261114-cmu). The gateway Key Vault `AuditEvent` diagnostic setting (`popeye-stage1-stage2-eastus2-kv-diag`) is applied, and a follow-up plan shows no changes. Still open before the ceremony: runbook 0a/0b (kit and PowerShell 7 on the VM), the 0c decision (422 or 429) and the 0d log check.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 

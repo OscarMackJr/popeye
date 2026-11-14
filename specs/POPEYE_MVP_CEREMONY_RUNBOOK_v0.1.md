@@ -2,7 +2,7 @@
 
 Operator runbook for the plan 01-08 admin ceremony: the smoke row, lockdown checks, shared budget counters and restart flush (MVP-01, GW-03, GW-04, GW-06), plus the NET-04 session evidence that plan 01-09 uses. This runbook turns 01-08 Task 2 into copy-paste steps. The plan (`.planning/phases/01-network-proof-gateway-hardening-smoke-row/01-08-PLAN.md`) and `specs/POPEYE_VERIFICATION_VM_TEST_PROCEDURE.md` step 7 remain authoritative. Where this runbook differs from the plan, it says so.
 
-Status: drafted 2026-11-11, after NET-06 was verified; revised 2026-11-14 after review. Steps 0a and 0b (copying the kit and installing PowerShell 7 through run-command) have not been run yet. Run them at least a day before the ceremony. The 0c decision (422 or 429) is still open. The 0e pre-checks must pass before T0.
+Status: drafted 2026-11-11, after NET-06 was verified; revised 2026-11-14 after review. Steps 0a and 0b (copying the kit and installing PowerShell 7 through run-command) have not been run yet. Run them at least a day before the ceremony. The 0c decision (422 or 429) is still open. The 0e pre-checks must pass before T0. The Key Vault audit setting (0e item 1) was applied on 2026-11-14 and confirmed with `az monitor diagnostic-settings list`; a follow-up `terraform plan` showed no changes.
 
 ## Who runs it
 
