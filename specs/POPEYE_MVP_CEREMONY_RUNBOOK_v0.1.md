@@ -6,7 +6,7 @@ Status: drafted 2026-11-11, after NET-06 was verified; revised 2026-11-14 after 
 - the kit is in `C:\popeye-kit`, and all 7 file hashes match the repo;
 - PowerShell 7.6.10 is installed and on the machine PATH.
 
-On 2026-11-06 at 18:38 UTC, SYSTEM uninstalled the Azure CLI from the VM in the same pass that removed .NET 6, most likely an automated software cleanup. It was reinstalled 2026-11-14 at 17:28 UTC (2.92.0). Re-run the read-only check on the morning of the ceremony in case it is removed again. The 0c decision (422 or 429) is still open. The 0e pre-checks must pass before T0. The Key Vault audit setting (0e item 1) was applied on 2026-11-14 and confirmed with `az monitor diagnostic-settings list`; a follow-up `terraform plan` showed no changes.
+On 2026-11-06 at 18:38 UTC, SYSTEM uninstalled the Azure CLI from the VM in the same pass that removed .NET 6, most likely an automated software cleanup. It was reinstalled 2026-11-14 at 17:28 UTC (2.92.0). Re-run the read-only check on the morning of the ceremony in case it is removed again. The 0c decision is made: 422 (2026-11-14). The 0e pre-checks must pass before T0. The Key Vault audit setting (0e item 1) was applied on 2026-11-14 and confirmed with `az monitor diagnostic-settings list`; a follow-up `terraform plan` showed no changes.
 
 ## Who runs it
 
@@ -83,6 +83,14 @@ It should print a 7.x version. Start a **new** Bastion session afterwards so PAT
 ### 0c. Decide what to do about 422 versus 429
 
 The scripts and the plan expect **422** when a budget runs out (LiteLLM 1.106). Program requirement TC-GOV-01 says 429. Decide which one the evidence and the CTO demo will show before the ceremony, and amend whichever document loses.
+
+**Decided 2026-11-14 (platform owner): 422.** The evidence and the CTO demo show what the gateway actually returns: HTTP 422 on budget exhaustion. Provider throttling stays 429, so the status code alone separates budget exhaustion from throttling, which is what the roadmap's §4.4 error taxonomy asks the response to do. The budget probe's PASS rule is unchanged: 422 present, no 429.
+
+Documents that still say 429 and need amending after the ceremony:
+- TC-GOV-01 (program requirements, outside this repo);
+- `specs/AI_USAGE_GOVERNANCE_ROADMAP_v0.2.md` §4.4, §4.5 and the Stage 1 demo list;
+- `specs/POPEYE_STAGE1_KICKOFF_v0.1.md` (budget counter lag, fallback payloads, live demo);
+- `specs/ROADMAP.md` step 4.
 
 ### 0d. Known weak spot: per-replica request attribution
 

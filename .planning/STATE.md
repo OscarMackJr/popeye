@@ -68,6 +68,7 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-07: LiteLLM v1.106.2@digest live 2026-10-23; backup pre-litellm-1106-20261023; coordination_redis log line unobservable under LITELLM_LOG=ERROR, proof moves to 01-08
 - [Phase 01]: 01-05: networking-owns branch; litellm-reader-dsn applied 2026-10-23; env DNS Terraform count-gated off
 - [Phase 01]: 01-04: Redis clustering policy stays NoCluster (spike all PASS over the private endpoint); Redis publicNetworkAccess Disabled 2026-10-23
+- [Phase 01]: 2026-11-14: Budget exhaustion is evidenced and demoed as HTTP 422 (LiteLLM 1.106 behaviour), not 429; provider throttling stays 429. TC-GOV-01 and the in-repo specs that say 429 (roadmap v0.2, Stage 1 kickoff, specs/ROADMAP.md) are amended after the ceremony.
 - [Phase 01]: Phase 01-02: env DNS zone owned by networking; D-08 extended to database-url/reader-dsn (user-approved); VM tooling via Install-PopeyeVmTooling.ps1 before plan 08
 
 ### Pending Todos
@@ -89,7 +90,7 @@ None yet.
   - 2026-11-11: NET-06 PASS and ticked. Control-plane re-run PASS with bare UPNs, and both Oscar and Oleg signed in with Entra through Bastion to EUS-VM-POPEYE in non-admin sessions (`artifacts/popeye-phase1-preflight-2026-10-22.md`). Plan 01-08 has no hard gates left. Open: Security's written view on the temporary outbound rule (non-blocking per networking), and whether the CTO demo shows 422 (LiteLLM 1.106) or 429 (TC-GOV-01) on budget exhaustion.
   - 2026-11-11 (later): Networking linked the env DNS zone to `vnet-popeye-stage1-stage2-eastus2`, so it is now linked to both VNets (auto-registration off) and resolves to 10.60.0.108 per their check. Our `Test-PopeyeAzureVerificationVm.ps1` re-run is pending; NET-03 is ticked in 01-09 once it PASSes.
   - 2026-11-11 (verified): `Test-PopeyeAzureVerificationVm.ps1` re-run at 21:50 UTC passes all 16 checks, NET-03 included (no VNet missing a link). There are no open network asks for Phase 1. NET-03 is ticked in 01-09.
-  - 2026-11-14: Ceremony runbook reviewed and fixed (261114-cmu). The gateway Key Vault `AuditEvent` diagnostic setting (`popeye-stage1-stage2-eastus2-kv-diag`) is applied, and a follow-up plan shows no changes. Still open before the ceremony: the 0c decision (422 or 429) and the 0d log check.
+  - 2026-11-14: Ceremony runbook reviewed and fixed (261114-cmu). The gateway Key Vault `AuditEvent` diagnostic setting (`popeye-stage1-stage2-eastus2-kv-diag`) is applied, and a follow-up plan shows no changes. Still open before the ceremony: the 0d log check.
   - 2026-11-14 (later): Runbook 0a and 0b done and verified with a read-only run-command check: the kit is in `C:\popeye-kit` with all 7 hashes matching the repo, and PowerShell 7.6.10 is on the machine PATH. The Azure CLI had been uninstalled by SYSTEM on 2026-11-06 18:38 UTC, together with .NET 6 (likely an automated cleanup). It was reinstalled 2026-11-14 17:28 UTC (2.92.0). psql reports 16.15. Re-check the VM tooling on the morning of the ceremony, and ask IT to exempt az and PowerShell 7.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
