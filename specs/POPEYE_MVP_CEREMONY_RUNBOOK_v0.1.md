@@ -2,7 +2,7 @@
 
 Operator runbook for the plan 01-08 admin ceremony: the smoke row, lockdown checks, shared budget counters and restart flush (MVP-01, GW-03, GW-04, GW-06), plus the NET-04 session evidence that plan 01-09 uses. This runbook turns 01-08 Task 2 into copy-paste steps. The plan (`.planning/phases/01-network-proof-gateway-hardening-smoke-row/01-08-PLAN.md`) and `specs/POPEYE_VERIFICATION_VM_TEST_PROCEDURE.md` step 7 remain authoritative. Where this runbook differs from the plan, it says so.
 
-Status: drafted 2026-11-11, after NET-06 was verified. Steps 0a and 0b (copying the kit and installing PowerShell 7 through run-command) have not been run yet. Run them at least a day before the ceremony.
+Status: drafted 2026-11-11, after NET-06 was verified; revised 2026-11-14 after review. Steps 0a and 0b (copying the kit and installing PowerShell 7 through run-command) have not been run yet. Run them at least a day before the ceremony. The 0c decision (422 or 429) is still open. The 0e pre-checks must pass before T0.
 
 ## Who runs it
 
@@ -84,6 +84,28 @@ The scripts and the plan expect **422** when a budget runs out (LiteLLM 1.106). 
 
 Step 8 has to show which replica served each request. The gateway runs with `LITELLM_LOG=ERROR`, and in 01-07 the Redis coordination log line couldn't be seen at that level, so request IDs may not appear in the logs. If they don't, use the plan's fallback (per-replica request counts from `az containerapp logs show --replica <name>`) and record the method. If neither works, record a gap. **Don't change the log level during the ceremony.**
 
+At `LITELLM_LOG=ERROR` the fallback may find nothing either. Check this before the ceremony: in the portal, open Log Analytics `popeye-stage1-stage2-eastus2-law` → **Logs** → KQL mode, and run:
+
+```
+ContainerAppConsoleLogs_CL
+| where TimeGenerated > ago(24h)
+| where Log_s has "chat/completions"
+| summarize lines = count() by ContainerGroupName_s
+```
+
+Zero rows (with some completions sent in that window) means neither method can attribute requests to replicas. Step 8.6 then records a gap, and the cross-replica proof relies on the shared Redis counter keys and a consistent 422.
+
+### 0e. Pre-checks before T0
+
+1. **Key Vault audit logging is on.** The gateway vault's `AuditEvent` diagnostic setting (`popeye-stage1-stage2-eastus2-kv-diag`, added 2026-11-14 in `modules/gateway-observability-azure`) must be applied before the grant window. Without it, step 10.4 reads nothing. Confirm it on the workstation:
+
+   ```powershell
+   az monitor diagnostic-settings list --resource (az keyvault show -n kv-popeye-gw-98c2b71b --query id -o tsv) --query "[].name" -o tsv
+   ```
+
+   Expect `popeye-stage1-stage2-eastus2-kv-diag`.
+2. **The 0d log check is done**, and you know which method step 8.6 will use.
+
 ---
 
 ## 1. Grant (workstation): start of the privileged window, T0
@@ -111,7 +133,7 @@ az login --use-device-code          # as the platform owner
 $gw  = 'https://popeye-stage1-stage2-eastus2-app.internal.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io'
 $kvn = 'kv-popeye-gw-98c2b71b'
 $tid = (az account show --query tenantId -o tsv).ToLowerInvariant()
-$oid = az ad signed-in-user show --query id -o tsv
+$oid = (az ad signed-in-user show --query id -o tsv).ToLowerInvariant()
 .\scripts\Test-PopeyeVerificationVm.ps1 -GatewayFqdn ($gw -replace 'https://') -ExpectedGatewayIp 10.60.0.108
 ```
 
@@ -125,11 +147,14 @@ If Conditional Access blocks device-code sign-in, run `az login` without the fla
 
 ```powershell
 $mk = az keyvault secret show --vault-name $kvn --name litellm-master-key --query value -o tsv
-(Invoke-WebRequest "$gw/health?model=twg-foundry" -Headers @{Authorization="Bearer $mk"} -SkipHttpErrorCheck).StatusCode
+$h = Invoke-WebRequest "$gw/health?model=twg-foundry" -Headers @{Authorization="Bearer $mk"} -SkipHttpErrorCheck
 Remove-Variable mk
+$hb = $h.Content | ConvertFrom-Json
+"HTTP=$($h.StatusCode) healthy=$($hb.healthy_count) unhealthy=$($hb.unhealthy_count)"
+Remove-Variable h,hb
 ```
 
-Expect 200 with a healthy endpoint. If it isn't healthy, stop: fix the gateway identity's Foundry permissions or `foundry_scope_id` first.
+Expect `HTTP=200 healthy=1 unhealthy=0`. LiteLLM returns 200 even when the endpoint is unhealthy, so the counts are the check. Don't print the whole body: it carries endpoint details. If it isn't healthy, stop: fix the gateway identity's Foundry permissions or `foundry_scope_id` first.
 
 ## 4. Create the ledger reader role (D-13)
 
@@ -139,9 +164,10 @@ Expect 200 with a healthy endpoint. If it isn't healthy, stop: fix the gateway i
 & .\scripts\Set-PopeyeLedgerReader.ps1 -KeyVaultName $kvn          # re-run: proves idempotence
 ```
 
-This is the only step that needs `litellm-database-url`. To shorten that grant's window, remove it from the workstation now:
+This is the only step that needs `litellm-database-url`. To shorten that grant's window, remove it now. **Run this on the workstation, not the VM**: `$oid` and `$kv` are the workstation variables from step 1.
 
 ```powershell
+# workstation
 az role assignment delete --assignee $oid --role "Key Vault Secrets User" --scope "$kv/secrets/litellm-database-url"
 ```
 
@@ -171,6 +197,14 @@ $dsn = az keyvault secret show --vault-name $kvn --name litellm-reader-dsn --que
 ```
 
 Expect PASS: exactly one row, and team, user, key alias and tag all match. If the script prints an INFO line about `principal_type`, copy it into the evidence.
+
+Then check that the gateway priced the call. Step 8's budget probe can only reach 422 if spend is above zero:
+
+```powershell
+psql "--dbname=$dsn" --no-password --tuples-only --no-align --command "SELECT spend > 0 FROM public.""LiteLLM_SpendLogs"" WHERE request_id = '$($r.RequestId)';"
+```
+
+Expect `t`. If it prints `f`, LiteLLM can't price the Foundry deployment: the config has no `model_info`/`base_model`. Record a GW-06 gap for the budget probe and still run the rest of step 8. The fix is a config change after the ceremony, not during it.
 
 ## 8. Shared budget counters and cross-replica proof (GW-06)
 
@@ -210,7 +244,7 @@ Expect PASS: exactly one row, and team, user, key alias and tag all match. If th
 
 6. Work out which replica served each request. Run this from the VM or the portal; the operator workstation's TLS proxy breaks `az` log queries:
 
-   ```kusto
+   ```
    ContainerAppConsoleLogs_CL | where ContainerGroupName_s == '<replica>' | where Log_s has '<request_id>'
    ```
 
@@ -221,15 +255,22 @@ Record replica labels (replica-1, replica-2), the request count per replica, and
 ## 9. Restart with no lost rows (GW-04)
 
 ```powershell
-$rev = az containerapp revision list -n popeye-stage1-stage2-eastus2-app -g rg-popeye-stage1-stage2-eastus2 --query "[?properties.active].name | [0]" -o tsv
+$rev = (az containerapp revision list -n popeye-stage1-stage2-eastus2-app -g rg-popeye-stage1-stage2-eastus2 -o json |
+  ConvertFrom-Json | Where-Object { $_.properties.active } | Select-Object -First 1).name
+$rev   # must not be empty
 $t9 = (Get-Date).ToUniversalTime()
 $f = & .\scripts\Invoke-PopeyeSmoke.ps1 -Action Run -Count 3 -GatewayBaseUrl $gw -KeyVaultName $kvn -TenantId $tid -UserObjectId $oid
-az containerapp revision restart -n popeye-stage1-stage2-eastus2-app -g rg-popeye-stage1-stage2-eastus2 --revision $rev   # within 5 s of the line above
+$tLast = (Get-Date).ToUniversalTime()
+az containerapp revision restart -n popeye-stage1-stage2-eastus2-app -g rg-popeye-stage1-stage2-eastus2 --revision $rev
+$tRestart = (Get-Date).ToUniversalTime()
+"restart accepted {0:N1} s after the last completion" -f ($tRestart - $tLast).TotalSeconds
 Start-Sleep 60
 & .\scripts\Test-PopeyeVerificationPsql.ps1 -Dsn $dsn -KeyHash $f.KeyHash -SinceUtc $t9.AddMinutes(-5) -ExpectedCount 3
 ```
 
-Expect PASS with exactly 3 rows.
+Expect PASS with exactly 3 rows. The `--query` filter is done with `ConvertFrom-Json` because az.cmd on Windows mangles `?` and `|` in `--query`.
+
+Record the restart gap. LiteLLM writes spend rows in batches every 10 s, so if the restart was accepted more than about 10 s after the last completion, the rows were probably written before shutdown. In that case the 3-row PASS doesn't prove the shutdown flush: record GW-04 as **inconclusive**, not PASS.
 
 ## 10. Cleanup: end of the privileged window, T1
 
@@ -240,6 +281,8 @@ Expect PASS with exactly 3 rows.
    & .\scripts\Test-PopeyeGatewayLockdown.ps1 -GatewayBaseUrl $gw -UserKey $r.Key   # positive control should now FAIL: the key is refused
    Remove-Variable dsn,r,x,f -ErrorAction SilentlyContinue
    Clear-History; Remove-Item (Get-PSReadLineOption).HistorySavePath -ErrorAction SilentlyContinue
+   az logout; az account clear   # signing out of Windows leaves the az token cache in the profile
+   az account show 2>$null; $LASTEXITCODE   # expect non-zero: no signed-in account
    ```
 
    The plan also asks for `/key/info` showing `blocked: true`. That requires sending the key in a URL, so the "refused" result above is the safer proof. If the `/key/info` line is wanted anyway, query it by key hash, never by the plain key.
@@ -255,12 +298,14 @@ Expect PASS with exactly 3 rows.
    (Get-Date).ToUniversalTime()   # T1
    ```
 
-4. Record the Key Vault audit trail in the portal, with the query and row counts only:
+4. Record the Key Vault audit trail in the portal, with the query and row counts only. Logs can take 5–15 minutes to arrive, so wait before running this:
 
-   ```kusto
+   ```
    AzureDiagnostics | where Category == "AuditEvent" and OperationName == "SecretGet"
    | where TimeGenerated between (datetime(<T0>) .. datetime(<T1>)) | summarize count() by id_s
    ```
+
+   Zero rows is not a clean result: the ceremony read secrets, so there must be SecretGet rows. If there are none, check the diagnostic setting from 0e and record a gap.
 
    Keep `litellm-reader-dsn` readable afterwards if operators still need it, as procedure step 7 allows.
 
@@ -271,7 +316,9 @@ Bring back:
 - T0 and T1, and the Bastion session window;
 - the PASS or FAIL result of each step;
 - the request ID from step 5 and the first 8 characters of the key hash;
+- the step 3 healthy and unhealthy counts, and the step 7 spend check (`t` or `f`);
 - the budget-probe histogram;
+- the step 9 restart gap in seconds;
 - replica labels and per-replica counts, and the before and after Redis key-name counts;
 - the NET-04 rows and the method used in step 8.6.
 

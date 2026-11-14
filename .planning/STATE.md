@@ -122,6 +122,7 @@ None yet.
 | 261110-n1z | Record NET-06 control-plane verification PASS and NET-03 Popeye VNet link gap | 2026-11-10 | docs(quick-261110-n1z) | [261110-n1z-record-net-06-control-plane-verification](./quick/261110-n1z-record-net-06-control-plane-verification/) |
 | 261111-ncf | Record networking's NET-03 Popeye VNet link completion; our re-run pending | 2026-11-11 | docs(quick-261111-ncf) | [261111-ncf-record-networking-net-03-second-vnet-lin](./quick/261111-ncf-record-networking-net-03-second-vnet-lin/) |
 | 261111-nhn | Record NET-03 verification PASS (env zone linked to both VNets) | 2026-11-11 | docs(quick-261111-nhn) | [261111-nhn-record-net-03-verification-pass](./quick/261111-nhn-record-net-03-verification-pass/) |
+| 261114-cmu | Apply ceremony runbook review fixes and add gateway Key Vault audit diagnostic setting | 2026-11-14 | feat/docs(quick-261114-cmu) | [261114-cmu-apply-ceremony-runbook-review-fixes-and-](./quick/261114-cmu-apply-ceremony-runbook-review-fixes-and-/) |
 
 ## Deferred Items
 
