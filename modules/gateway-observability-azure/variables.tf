@@ -18,6 +18,11 @@ variable "container_app_id" {
   type = string
 }
 
+variable "gateway_key_vault_id" {
+  description = "Gateway Key Vault resource ID; its AuditEvent log goes to the workspace."
+  type        = string
+}
+
 variable "teams_webhook_url" {
   description = "Teams incoming-webhook URL for the notify channel (roadmap 7.3)."
   type        = string
