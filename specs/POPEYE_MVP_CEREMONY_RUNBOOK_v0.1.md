@@ -2,7 +2,11 @@
 
 Operator runbook for the plan 01-08 admin ceremony: the smoke row, lockdown checks, shared budget counters and restart flush (MVP-01, GW-03, GW-04, GW-06), plus the NET-04 session evidence that plan 01-09 uses. This runbook turns 01-08 Task 2 into copy-paste steps. The plan (`.planning/phases/01-network-proof-gateway-hardening-smoke-row/01-08-PLAN.md`) and `specs/POPEYE_VERIFICATION_VM_TEST_PROCEDURE.md` step 7 remain authoritative. Where this runbook differs from the plan, it says so.
 
-Status: drafted 2026-11-11, after NET-06 was verified; revised 2026-11-14 after review. Steps 0a and 0b (copying the kit and installing PowerShell 7 through run-command) have not been run yet. Run them at least a day before the ceremony. The 0c decision (422 or 429) is still open. The 0e pre-checks must pass before T0. The Key Vault audit setting (0e item 1) was applied on 2026-11-14 and confirmed with `az monitor diagnostic-settings list`; a follow-up `terraform plan` showed no changes.
+Status: drafted 2026-11-11, after NET-06 was verified; revised 2026-11-14 after review. Steps 0a and 0b are done and were verified 2026-11-14 with a read-only run-command check:
+- the kit is in `C:\popeye-kit`, and all 7 file hashes match the repo;
+- PowerShell 7.6.10 is installed and on the machine PATH.
+
+On 2026-11-06 at 18:38 UTC, SYSTEM uninstalled the Azure CLI from the VM in the same pass that removed .NET 6, most likely an automated software cleanup. It was reinstalled 2026-11-14 at 17:28 UTC (2.92.0). Re-run the read-only check on the morning of the ceremony in case it is removed again. The 0c decision (422 or 429) is still open. The 0e pre-checks must pass before T0. The Key Vault audit setting (0e item 1) was applied on 2026-11-14 and confirmed with `az monitor diagnostic-settings list`; a follow-up `terraform plan` showed no changes.
 
 ## Who runs it
 
