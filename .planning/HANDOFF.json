@@ -47,6 +47,11 @@
   "blockers": [],
   "human_actions_pending": [
     {
+      "action": "IT: Conditional Access exception for Azure CLI sign-in (app 04b07795-8ddb-461a-bbee-02f9e1bf7b46) from EUS-VM-POPEYE for omack@ and oboksner@",
+      "context": "2026-11-14 ceremony aborted at step 2: AADSTS53003 (request 8b60b5c8-17ad-44f0-945f-4b586fd55800, NAT IP 20.231.80.239); WAM Status_NoNetwork (possible port-80 CRL/OCSP block, networking). No secret read; grants removed.",
+      "blocking": true
+    },
+    {
       "action": "Security: view on keeping NSG Internet outbound 443-anywhere through the ceremony",
       "context": "networking recommends keeping it until the central firewall",
       "blocking": false
@@ -77,6 +82,6 @@
   "uncommitted_files": [
     "scripts/Test-PopeyeAzureVerificationVm.zip (untracked, intentionally not committed)"
   ],
-  "next_action": "NET-06 is ticked (2026-11-11). Run /gsd-execute-phase 1 for 01-08 Task 2 (interactive Bastion ceremony). NET-03 verified PASS 2026-11-11 (tick in 01-09).",
+  "next_action": "Get IT's Conditional Access exception for Azure CLI on EUS-VM-POPEYE, then rerun the ceremony from runbook step 1 (/gsd-execute-phase 1, 01-08 Task 2). Re-check VM tooling first.",
   "context_notes": "Work since 2026-10-23 ran as quick tasks 261027-j3d..261104-w3h (see STATE.md Quick Tasks and artifacts/popeye-phase1-preflight-2026-10-22.md). All pushed to origin/main; gateway re-pinned to LiteLLM v1.106.7 by PR #3 (b9be2ba). Postgres now resolves to 10.60.2.4 (was .5). Gateway FQDN popeye-stage1-stage2-eastus2-app.internal.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io; env staticIp 10.60.0.108. VM RG EUS-RG-POPEYE-VM-01; VM 10.10.2.4 in EUS-POPEYE-VNET-01/EUS-POPEYE-VNET-02. Caller VNet EUS-POPEYE-VNET-01 is in RG EUS-RG-POPEYE-VNET-01 (VM subnet named EUS-POPEYE-VNET-02); pass operator UPNs to -ApprovedOperatorDisplayNames."
 }
