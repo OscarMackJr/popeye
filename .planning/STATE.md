@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-22)
 Phase: 01 (network-proof-gateway-hardening-smoke-row) — EXECUTING
 Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-11-04 - Completed quick task 261104-w3h: Vinay approved non-admin VM access for Oscar and Oleg (Oleg replaces Roger)
+Last activity: 2026-11-11 - NET-06 verified and ticked (control plane PASS; Bastion sign-in by both operators)
 
 Progress: [████████░░] 78%
 
@@ -68,6 +68,7 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-07: LiteLLM v1.106.2@digest live 2026-10-23; backup pre-litellm-1106-20261023; coordination_redis log line unobservable under LITELLM_LOG=ERROR, proof moves to 01-08
 - [Phase 01]: 01-05: networking-owns branch; litellm-reader-dsn applied 2026-10-23; env DNS Terraform count-gated off
 - [Phase 01]: 01-04: Redis clustering policy stays NoCluster (spike all PASS over the private endpoint); Redis publicNetworkAccess Disabled 2026-10-23
+- [Phase 01]: 2026-11-14: Budget exhaustion is evidenced and demoed as HTTP 422 (LiteLLM 1.106 behaviour), not 429; provider throttling stays 429. TC-GOV-01 and the in-repo specs that say 429 (roadmap v0.2, Stage 1 kickoff, specs/ROADMAP.md) are amended after the ceremony.
 - [Phase 01]: Phase 01-02: env DNS zone owned by networking; D-08 extended to database-url/reader-dsn (user-approved); VM tooling via Install-PopeyeVmTooling.ps1 before plan 08
 
 ### Pending Todos
@@ -84,6 +85,14 @@ None yet.
   - 2026-11-04 (later): Follow-up sent to networking asking for NET-03 (env DNS zone) status, NET-06 (User Login) confirmation, and offering to narrow the Internet-wide HTTPS rule to the three Azure service tags (their call). Awaiting reply.
   - 2026-11-04 (reply): NET-03 is done: networking created the env DNS zone. Gateway FQDN → 10.60.0.108 and TCP 443 PASS from the VM (run-command preview, `Test-PopeyeVerificationVm.ps1`). NET-06 is held for Vinay: only Oscar has VM Admin Login (original instruction), and Oscar to User Login plus Roger User Login/Reader needs his confirmation. Networking recommends keeping 443-anywhere through the ceremony (Security to approve) and Promenet owning shared networking. Plan 01-08 gates now: the NET-06 decision and Security's view on outbound.
   - 2026-11-04 (Vinay): approved Oscar and Oleg on the VM as non-admins. Oleg replaces Roger as the second operator. The NET-06 RBAC change has been requested from networking.
+  - 2026-11-10: Networking applied NET-06. Oscar moved from Administrator Login to User Login; Oleg has User Login plus Reader on the VM, NIC and Bastion; Roger's access was removed. Outbound HTTPS is unchanged for the ceremony. Our verification (`Test-PopeyeAzureVerificationVm.ps1` plus a Bastion sign-in by each operator) is pending; NET-06 stays unticked until it passes.
+  - 2026-11-10 (verified): `Test-PopeyeAzureVerificationVm.ps1` (after the 261110-mxi fix) shows NET-01/02/05/06 PASS: only the two operators hold VM User Login, with no Administrator Login. NET-06 is ticked once both operators have signed in through Bastion. NET-03 FAIL: the env DNS zone is not linked to `vnet-popeye-stage1-stage2-eastus2` (caller VNet link fine; ceremony not blocked). To raise with networking.
+  - 2026-11-11: NET-06 PASS and ticked. Control-plane re-run PASS with bare UPNs, and both Oscar and Oleg signed in with Entra through Bastion to EUS-VM-POPEYE in non-admin sessions (`artifacts/popeye-phase1-preflight-2026-10-22.md`). Plan 01-08 has no hard gates left. Open: Security's written view on the temporary outbound rule (non-blocking per networking), and whether the CTO demo shows 422 (LiteLLM 1.106) or 429 (TC-GOV-01) on budget exhaustion.
+  - 2026-11-11 (later): Networking linked the env DNS zone to `vnet-popeye-stage1-stage2-eastus2`, so it is now linked to both VNets (auto-registration off) and resolves to 10.60.0.108 per their check. Our `Test-PopeyeAzureVerificationVm.ps1` re-run is pending; NET-03 is ticked in 01-09 once it PASSes.
+  - 2026-11-11 (verified): `Test-PopeyeAzureVerificationVm.ps1` re-run at 21:50 UTC passes all 16 checks, NET-03 included (no VNet missing a link). There are no open network asks for Phase 1. NET-03 is ticked in 01-09.
+  - 2026-11-14: Ceremony runbook reviewed and fixed (261114-cmu). The gateway Key Vault `AuditEvent` diagnostic setting (`popeye-stage1-stage2-eastus2-kv-diag`) is applied, and a follow-up plan shows no changes. 0d log check done: inconclusive. Console logs reach the workspace per replica, but no completion has ever been sent through the gateway, so whether completions are logged is settled in the ceremony at step 8.6. No pre-ceremony items remain apart from the ceremony-morning tooling re-check.
+  - 2026-11-14 (ceremony attempt): ABORTED at step 2, before any secret read. Grant window T0 18:17:35Z to T1 18:49:10Z; the 3 secret-scope grants were removed and verified. `az login` in the Bastion session is blocked: device-code and browser sign-in by Conditional Access (AADSTS53003, Azure CLI app, NAT IP 20.231.80.239, device state Registered), and WAM by Status_NoNetwork (error 3400019682; hypothesis: the NSG allows 443 only, so port-80 CRL/OCSP checks fail). Needs an IT CA exception for Azure CLI from EUS-VM-POPEYE (omack@, oboksner@). Plan 01-08 is held on it, and the ceremony restarts from step 1.
+  - 2026-11-14 (later): Runbook 0a and 0b done and verified with a read-only run-command check: the kit is in `C:\popeye-kit` with all 7 hashes matching the repo, and PowerShell 7.6.10 is on the machine PATH. The Azure CLI had been uninstalled by SYSTEM on 2026-11-06 18:38 UTC, together with .NET 6 (likely an automated cleanup). It was reinstalled 2026-11-14 17:28 UTC (2.92.0). psql reports 16.15. Re-check the VM tooling on the morning of the ceremony, and ask IT to exempt az and PowerShell 7.
 
 - Operator workstation: a TLS-intercepting proxy breaks az data-plane calls (`containerapp logs show`, `log-analytics query`). Read logs in the portal. A REQUESTS_CA_BUNDLE fix is an IT decision.
 
@@ -95,7 +104,7 @@ None yet.
   - a Container Apps environment private DNS zone (`ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` → 10.60.0.108), linked to both VNets; without it the gateway FQDN does not resolve and the smoke test is blocked;
   - removing the internet-sourced RDP rule `Allow_Iliya_Promenet`;
   - User Login for both approved operators.
-- `EUS-VM-POPEYE` login (NET-06): 2026-11-04, Vinay approved non-admin access for Oscar and Oleg (Oleg replaced Roger). Networking still has to move Oscar from Administrator Login to User Login and grant Oleg User Login plus Reader.
+- `EUS-VM-POPEYE` login (NET-06): 2026-11-04, Vinay approved non-admin access for Oscar and Oleg (Oleg replaced Roger). Networking applied the change on 2026-11-10, and the control-plane check PASSes. Both operators signed in through Bastion on 2026-11-11 (non-admin); NET-06 ticked.
 - Program/nono decisions needed early in Phase 2: G11 (`on_behalf_of` format, one-way door), G2 (budget model, before any fleet mint), the `direct_gateway` default, and the G3 admin-revocation carve-out (OPS-03 depends on it).
 - Hook internals are LOW confidence until the Phase 3 spike, which gates the Phase 5 metadata contract.
 - The 60s revocation bound may be read as end-to-end (about 120s worst case). Clarify with nono, hometown and olive before Phase 6.
@@ -112,6 +121,12 @@ None yet.
 | 261104-r8n | Record the 2026-11-04 follow-up note to networking (NET-03, NET-06, HTTPS scope) | 2026-11-04 | docs(quick-261104-r8n) | [261104-r8n-record-follow-up-note-to-networking](./quick/261104-r8n-record-follow-up-note-to-networking/) |
 | 261104-t5w | Record NET-03 done, gateway reachable from VM, NET-06 pending Vinay; fix blank run-command args | 2026-11-04 | docs(quick-261104-t5w) | [261104-t5w-record-net03-done-gateway-reachable-from-vm](./quick/261104-t5w-record-net03-done-gateway-reachable-from-vm/) |
 | 261104-w3h | Record Vinay's NET-06 approval and the Roger-to-Oleg operator change | 2026-11-04 | docs(quick-261104-w3h) | [261104-w3h-record-net06-approval-oleg-replaces-roger](./quick/261104-w3h-record-net06-approval-oleg-replaces-roger/) |
+| 261110-mnk | Record networking's NET-06 RBAC completion; verification pending | 2026-11-10 | docs(quick-261110-mnk) | [261110-mnk-record-networking-s-net-06-rbac-completi](./quick/261110-mnk-record-networking-s-net-06-rbac-completi/) |
+| 261110-mxi | Fix strict-mode property errors in Test-PopeyeAzureVerificationVm.ps1 and isolate NET-06 checks | 2026-11-10 | fix(quick-261110-mxi) | [261110-mxi-fix-strict-mode-property-errors-in-test-](./quick/261110-mxi-fix-strict-mode-property-errors-in-test-/) |
+| 261110-n1z | Record NET-06 control-plane verification PASS and NET-03 Popeye VNet link gap | 2026-11-10 | docs(quick-261110-n1z) | [261110-n1z-record-net-06-control-plane-verification](./quick/261110-n1z-record-net-06-control-plane-verification/) |
+| 261111-ncf | Record networking's NET-03 Popeye VNet link completion; our re-run pending | 2026-11-11 | docs(quick-261111-ncf) | [261111-ncf-record-networking-net-03-second-vnet-lin](./quick/261111-ncf-record-networking-net-03-second-vnet-lin/) |
+| 261111-nhn | Record NET-03 verification PASS (env zone linked to both VNets) | 2026-11-11 | docs(quick-261111-nhn) | [261111-nhn-record-net-03-verification-pass](./quick/261111-nhn-record-net-03-verification-pass/) |
+| 261114-cmu | Apply ceremony runbook review fixes and add gateway Key Vault audit diagnostic setting | 2026-11-14 | feat/docs(quick-261114-cmu) | [261114-cmu-apply-ceremony-runbook-review-fixes-and-](./quick/261114-cmu-apply-ceremony-runbook-review-fixes-and-/) |
 
 ## Deferred Items
 

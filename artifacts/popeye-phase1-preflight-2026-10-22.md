@@ -183,3 +183,59 @@ net-06: approved (Vinay), pending networking RBAC change
 - Vinay's decision (2026-11-04): it is fine for Oleg and Oscar to have access to the VM as non-admins. This supersedes the original instruction restricting the VM to Oscar.
 - Requested from networking: move Oscar from Virtual Machine Administrator Login to Virtual Machine User Login, and grant Oleg Virtual Machine User Login plus the narrow-scope Reader needed to connect through Bastion. No other principals.
 - Verify after the change with `scripts/Test-PopeyeAzureVerificationVm.ps1 -ApprovedOperatorDisplayNames 'Oscar Mack','<Oleg display name>'`.
+
+## NET-06 RBAC applied by networking (2026-11-10)
+
+net-06: applied (networking), pending Popeye verification
+
+- Networking reports the approved change is done on EUS-VM-POPEYE:
+  - Oscar: Virtual Machine Administrator Login removed, replaced with Virtual Machine User Login.
+  - Oleg: Virtual Machine User Login on the VM, plus Reader on the VM, its NIC and EUS-POPEY-BASTION for Bastion connectivity.
+  - Roger: temporary Popeye access removed.
+  - Networking reviewed the VM login role assignments; no other unapproved principals hold VM login roles.
+- Outbound HTTPS (NAT gateway, NSG Internet outbound 443) is unchanged for the ceremony, as agreed.
+- Still to do on our side, after RBAC propagation:
+  1. `scripts/Test-PopeyeAzureVerificationVm.ps1 -ApprovedOperatorDisplayNames 'Oscar Mack','<Oleg display name>'`: NET-06 rows PASS (User Login limited to the two operators, both hold it, no Administrator Login).
+  2. Oscar and Oleg each sign in through EUS-POPEY-BASTION with Entra credentials and confirm a non-admin session.
+- NET-06 gets ticked once both pass. Anything unexpected goes back to networking.
+
+## NET-06 control-plane verification (2026-11-10)
+
+net-06: control plane PASS; Bastion sign-in by both operators pending
+
+- `scripts/Test-PopeyeAzureVerificationVm.ps1` was run from the operator workstation after the 261110-mxi fix, with caller VNet `EUS-POPEYE-VNET-01` in `EUS-RG-POPEYE-VNET-01` and the VM in `EUS-RG-POPEYE-VM-01`. The VM subnet is named `EUS-POPEYE-VNET-02`. Evidence: `artifacts/popeye-azure-verification-evidence.json`.
+- PASS:
+  - NET-01: peering is Connected and FullyInSync both ways, and networking owns it.
+  - NET-02: the Postgres private DNS zone is linked to both VNets, and public network access is Disabled.
+  - NET-05: no public IP; the Bastion subnet is 10.10.3.0/26; no RDP allow rule from outside Bastion; the Entra sign-in extension is present.
+  - NET-06: only the two approved operators hold Virtual Machine User Login (inherited assignments included), both hold it, and nobody has Administrator Login.
+- FAIL, NET-03: the environment zone `ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` (in `EUS-RG-POPEYE-VM-01`) has correct wildcard and apex A records → 10.60.0.108 and is linked to the caller VNet. It has **no link to `vnet-popeye-stage1-stage2-eastus2`**, which NET-03 requires. This does not block the ceremony, because the VM resolves the gateway through the caller VNet link (proven 2026-11-04). To raise with networking.
+- The operator list is matched against the role assignment's `principalName`, which is the UPN, not the display name.
+
+## NET-06 Bastion sign-in verification (2026-11-11)
+
+net-06: PASS
+
+- Oscar, Entra sign-in through EUS-POPEY-BASTION, 2026-11-11 18:01 UTC:
+  - `hostname`: EUS-VM-POPEYE
+  - `whoami`: twgglobal\omack; `whoami /upn`: omack@twgglobal.com
+  - Administrators (`S-1-5-32-544`): not in token; `IsInRole('Administrators')`: False
+  - `dsregcmd /status`: AzureAdJoined YES
+- Oleg, Entra sign-in through EUS-POPEY-BASTION, reported 2026-11-11 (no UTC time captured: `Get-Date -AsUTC` is not available in the VM's Windows PowerShell 5.1):
+  - `hostname`: EUS-VM-POPEYE
+  - `whoami`: twgglobal\oboksner; `whoami /upn`: oboksner@twgglobal.com
+  - Administrators (`S-1-5-32-544`): not in token; `IsInRole('Administrators')`: False
+  - `dsregcmd /status`: AzureAdJoined YES
+- Control-plane re-run 2026-11-11 17:54 UTC (`Test-PopeyeAzureVerificationVm.ps1` with bare UPNs `omack@twgglobal.com`, `oboksner@twgglobal.com`): all four NET-06 rows PASS. Exactly those two principals hold Virtual Machine User Login at VM scope; nobody holds Administrator Login. Evidence: `artifacts/popeye-azure-verification-evidence.json`. NET-03 still FAIL (env zone not linked to the Popeye VNet; known, not ceremony-blocking).
+- An earlier run that day passed the UPNs wrapped in angle brackets and reported false NET-06 FAILs. The script now refuses `<` or `>` in operator names.
+- NET-06 ticked 2026-11-11: both approved operators sign in with Entra through Bastion in non-admin sessions, and they are the only holders of VM login roles.
+
+## NET-03 Popeye VNet link (2026-11-11)
+
+net-03: networking reports done; our verification pending
+
+- Networking (2026-11-11) linked the env zone `ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` to `vnet-popeye-stage1-stage2-eastus2`. It is now linked to both `EUS-POPEYE-VNET-01` and `vnet-popeye-stage1-stage2-eastus2`, with auto-registration disabled on both links. Networking checked resolution: the Container Apps hostname resolves to 10.60.0.108.
+- Our check: re-run `scripts/Test-PopeyeAzureVerificationVm.ps1` and expect NET-03 PASS (both links present, records → 10.60.0.108). NET-03 is ticked in 01-09 with that evidence.
+- Verified 2026-11-11 21:50 UTC: `Test-PopeyeAzureVerificationVm.ps1` (same arguments as the NET-06 re-run) passed all 16 checks. NET-03 detail: wildcard A ok, apex A ok, and no VNet is missing a link. NET-01, NET-02, NET-05 and NET-06 are still PASS. Evidence: `artifacts/popeye-azure-verification-evidence.json`.
+
+net-03: PASS (checkbox ticked in 01-09 with the evidence index)

@@ -1,0 +1,351 @@
+# Popeye MVP Ceremony Runbook v0.1
+
+Operator runbook for the plan 01-08 admin ceremony: the smoke row, lockdown checks, shared budget counters and restart flush (MVP-01, GW-03, GW-04, GW-06), plus the NET-04 session evidence that plan 01-09 uses. This runbook turns 01-08 Task 2 into copy-paste steps. The plan (`.planning/phases/01-network-proof-gateway-hardening-smoke-row/01-08-PLAN.md`) and `specs/POPEYE_VERIFICATION_VM_TEST_PROCEDURE.md` step 7 remain authoritative. Where this runbook differs from the plan, it says so.
+
+Status: drafted 2026-11-11, after NET-06 was verified; revised 2026-11-14 after review. Steps 0a and 0b are done and were verified 2026-11-14 with a read-only run-command check:
+- the kit is in `C:\popeye-kit`, and all 7 file hashes match the repo;
+- PowerShell 7.6.10 is installed and on the machine PATH.
+
+On 2026-11-06 at 18:38 UTC, SYSTEM uninstalled the Azure CLI from the VM in the same pass that removed .NET 6, most likely an automated software cleanup. It was reinstalled 2026-11-14 at 17:28 UTC (2.92.0). Re-run the read-only check on the morning of the ceremony in case it is removed again. The 0c decision is made: 422 (2026-11-14). The 0e pre-checks must pass before T0. The Key Vault audit setting (0e item 1) was applied on 2026-11-14 and confirmed with `az monitor diagnostic-settings list`; a follow-up `terraform plan` showed no changes.
+
+## Who runs it
+
+The **platform owner (Oscar)** runs it, in a normal **non-admin** Bastion session on `EUS-VM-POPEYE`. "Admin" refers to the Azure and LiteLLM credentials the ceremony uses, not to Windows. Don't reinstate Virtual Machine Administrator Login: NET-06 requires that nobody holds it without written approval.
+
+| Privilege | Source |
+|---|---|
+| LiteLLM master key (mint, block and inspect keys) | Time-boxed **Key Vault Secrets User** scoped to the single secret `litellm-master-key` (procedure step 7a) |
+| Postgres admin, to create `ekg_cube_reader` | The same kind of grant on `litellm-database-url` (procedure step 7c, confirmed 2026-10-22) |
+| Reader DSN for the row assertions | The same kind of grant on `litellm-reader-dsn` |
+| Creating and removing those grants | Owner, User Access Administrator or Role Based Access Control Administrator on `kv-popeye-gw-98c2b71b`, from the operator workstation |
+| Revision restart, replica list, console access to a replica, log queries | Contributor on the gateway Container App; Log Analytics Reader |
+
+The VM's managed identity gets no Key Vault grant (procedure step 7e). Secret-touching steps run only in the interactive Bastion session, under the operator's own `az login` (D-18). Run-command is used only for steps that touch no secret (0a, 0b).
+
+Optional: the second operator (Oleg) watches the operator's screen. It isn't required.
+
+## Values
+
+| Name | Value |
+|---|---|
+| Key Vault | `kv-popeye-gw-98c2b71b` |
+| Gateway app | `popeye-stage1-stage2-eastus2-app` |
+| Gateway resource group | `rg-popeye-stage1-stage2-eastus2` |
+| Gateway FQDN | `popeye-stage1-stage2-eastus2-app.internal.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io` → 10.60.0.108 |
+| Postgres | `pg-popeye-stage1-stage2-eastus2.postgres.database.azure.com` |
+| VM | `EUS-VM-POPEYE` in resource group `EUS-RG-POPEYE-VM-01`, through `EUS-POPEY-BASTION` (Basic SKU) |
+
+Allow about 90 minutes in one sitting, and write down a **UTC timestamp for every step**. On the VM, Windows PowerShell 5.1 has no `Get-Date -AsUTC`; use `(Get-Date).ToUniversalTime()`.
+
+---
+
+## 0. Preparation (workstation, at least a day before)
+
+### 0a. Copy the scripts onto the VM
+
+Basic SKU Bastion has no file transfer, so the kit goes over run-command. Nothing secret is involved. Run this from the repository root in PowerShell 7:
+
+```powershell
+$stage = "$env:TEMP\popeye-kit"; Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory "$stage\scripts","$stage\sql","$stage\config" | Out-Null
+Copy-Item scripts\Set-PopeyeLedgerReader.ps1,scripts\Invoke-PopeyeSmoke.ps1,scripts\Test-PopeyeGatewayLockdown.ps1,scripts\Test-PopeyeVerificationPsql.ps1,scripts\Test-PopeyeVerificationVm.ps1 "$stage\scripts"
+Copy-Item sql\ai_usage_grants_azure.sql "$stage\sql"; Copy-Item config\llm-allowed-routes.json "$stage\config"
+Compress-Archive "$stage\*" "$env:TEMP\popeye-kit.zip" -Force
+$b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("$env:TEMP\popeye-kit.zip"))
+@"
+`$b = '$b64'
+New-Item -ItemType Directory C:\popeye-kit -Force | Out-Null
+[IO.File]::WriteAllBytes('C:\popeye-kit\kit.zip',[Convert]::FromBase64String(`$b))
+Expand-Archive C:\popeye-kit\kit.zip C:\popeye-kit -Force
+Get-ChildItem C:\popeye-kit -Recurse -File -Exclude kit.zip | Get-FileHash | ForEach-Object { "`$(`$_.Hash.Substring(0,12))  `$(Split-Path `$_.Path -Leaf)" }
+"@ | Set-Content "$env:TEMP\deploy-kit.ps1"
+az vm run-command invoke -g EUS-RG-POPEYE-VM-01 -n EUS-VM-POPEYE --command-id RunPowerShellScript --scripts "@$env:TEMP\deploy-kit.ps1"
+Get-ChildItem $stage -Recurse -File | Get-FileHash | ForEach-Object { "$($_.Hash.Substring(0,12))  $(Split-Path $_.Path -Leaf)" }
+```
+
+The hash list from the VM must match the one printed on the workstation. The kit keeps the `scripts/`, `sql/` and `config/` layout, because `Set-PopeyeLedgerReader.ps1` and `Invoke-PopeyeSmoke.ps1` find their SQL and routes files relative to `$PSScriptRoot`.
+
+### 0b. Install PowerShell 7 on the VM
+
+The ceremony scripts need PowerShell 7 (`-SkipHttpErrorCheck`, `SHA256.HashData`), and the VM has only Windows PowerShell 5.1. Run-command runs as SYSTEM, so no Windows admin session is needed:
+
+```powershell
+@'
+[Net.ServicePointManager]::SecurityProtocol = 'Tls12'
+iex "& { $(irm https://aka.ms/install-powershell.ps1) } -UseMSI -Quiet"
+& 'C:\Program Files\PowerShell\7\pwsh.exe' -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
+'@ | Set-Content "$env:TEMP\install-pwsh.ps1"
+az vm run-command invoke -g EUS-RG-POPEYE-VM-01 -n EUS-VM-POPEYE --command-id RunPowerShellScript --scripts "@$env:TEMP\install-pwsh.ps1"
+```
+
+It should print a 7.x version. Start a **new** Bastion session afterwards so PATH picks it up.
+
+### 0c. Decide what to do about 422 versus 429
+
+The scripts and the plan expect **422** when a budget runs out (LiteLLM 1.106). Program requirement TC-GOV-01 says 429. Decide which one the evidence and the CTO demo will show before the ceremony, and amend whichever document loses.
+
+**Decided 2026-11-14 (platform owner): 422.** The evidence and the CTO demo show what the gateway actually returns: HTTP 422 on budget exhaustion. Provider throttling stays 429, so the status code alone separates budget exhaustion from throttling, which is what the roadmap's §4.4 error taxonomy asks the response to do. The budget probe's PASS rule is unchanged: 422 present, no 429.
+
+Documents that still say 429 and need amending after the ceremony:
+- TC-GOV-01 (program requirements, outside this repo);
+- `specs/AI_USAGE_GOVERNANCE_ROADMAP_v0.2.md` §4.4, §4.5 and the Stage 1 demo list;
+- `specs/POPEYE_STAGE1_KICKOFF_v0.1.md` (budget counter lag, fallback payloads, live demo);
+- `specs/ROADMAP.md` step 4.
+
+### 0d. Known weak spot: per-replica request attribution
+
+Step 8 has to show which replica served each request. The gateway runs with `LITELLM_LOG=ERROR`, and in 01-07 the Redis coordination log line couldn't be seen at that level, so request IDs may not appear in the logs. If they don't, use the plan's fallback (per-replica request counts from `az containerapp logs show --replica <name>`) and record the method. If neither works, record a gap. **Don't change the log level during the ceremony.**
+
+At `LITELLM_LOG=ERROR` the fallback may find nothing either. Check this before the ceremony: in the portal, open Log Analytics `popeye-stage1-stage2-eastus2-law` → **Logs** → KQL mode, and run:
+
+```
+ContainerAppConsoleLogs_CL
+| where TimeGenerated > ago(24h)
+| where Log_s has "chat/completions"
+| summarize lines = count() by ContainerGroupName_s
+```
+
+Zero rows (with some completions sent in that window) means neither method can attribute requests to replicas. Step 8.6 then records a gap, and the cross-replica proof relies on the shared Redis counter keys and a consistent 422.
+
+**Result 2026-11-14, inconclusive.** A 30-day query found console logs reaching the workspace from every replica: thousands of lines per replica, newest 2026-11-11, with `ContainerGroupName_s` naming the replica. None of them is a `chat/completions` line. But no completion had ever been sent through the gateway (the 11-08 upgrade evidence has health probes only), so zero completion lines doesn't show whether completions get logged. This is settled during the ceremony in step 8.6, which runs a log query right after step 8.4's 12 completions.
+
+### 0e. Pre-checks before T0
+
+1. **Key Vault audit logging is on.** The gateway vault's `AuditEvent` diagnostic setting (`popeye-stage1-stage2-eastus2-kv-diag`, added 2026-11-14 in `modules/gateway-observability-azure`) must be applied before the grant window. Without it, step 10.4 reads nothing. Confirm it on the workstation:
+
+   ```powershell
+   az monitor diagnostic-settings list --resource (az keyvault show -n kv-popeye-gw-98c2b71b --query id -o tsv) --query "[].name" -o tsv
+   ```
+
+   Expect `popeye-stage1-stage2-eastus2-kv-diag`.
+2. **The 0d log check is done.** Done 2026-11-14: inconclusive, and settled in step 8.6.
+
+---
+
+## 1. Grant (workstation): start of the privileged window, T0
+
+```powershell
+$oid = az ad signed-in-user show --query id -o tsv
+$kv  = az keyvault show -n kv-popeye-gw-98c2b71b --query id -o tsv
+foreach ($s in 'litellm-master-key','litellm-database-url','litellm-reader-dsn') {
+  az role assignment create --assignee-object-id $oid --assignee-principal-type User `
+    --role "Key Vault Secrets User" --scope "$kv/secrets/$s" --query id -o tsv }
+(Get-Date).ToUniversalTime()   # T0
+```
+
+Never grant at vault scope. Role assignments can take a few minutes to take effect.
+
+## 2. Bastion session and NET-04 evidence
+
+1. Connect to `EUS-VM-POPEYE` through Bastion with **Microsoft Entra ID** authentication.
+2. Note the session start time in UTC.
+3. Open **PowerShell 7** (`pwsh`) and run:
+
+```powershell
+Set-Location C:\popeye-kit
+az login --use-device-code          # as the platform owner
+$gw  = 'https://popeye-stage1-stage2-eastus2-app.internal.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io'
+$kvn = 'kv-popeye-gw-98c2b71b'
+$tid = (az account show --query tenantId -o tsv).ToLowerInvariant()
+$oid = (az ad signed-in-user show --query id -o tsv).ToLowerInvariant()
+.\scripts\Test-PopeyeVerificationVm.ps1 -GatewayFqdn ($gw -replace 'https://') -ExpectedGatewayIp 10.60.0.108
+```
+
+Record the four NET-04 rows (DNS and TCP 5432 to Postgres, DNS and TCP 443 to the gateway) with the session window. These are plan 01-09's Bastion-session NET-04 evidence.
+
+If Conditional Access blocks device-code sign-in, run `az login` without the flag and use the browser in the Bastion session.
+
+> **Deviation from the plan: run every script in-process, `& .\scripts\X.ps1`, never `pwsh scripts/X.ps1`.** The plan writes `$r = pwsh scripts/...`. Launching a child `pwsh` turns the output into plain text, so `$r.Key` (a SecureString) and `$r.KeyHash` would be empty. Record this deviation in the evidence.
+
+## 3. Check that Foundry is healthy
+
+```powershell
+$mk = az keyvault secret show --vault-name $kvn --name litellm-master-key --query value -o tsv
+$h = Invoke-WebRequest "$gw/health?model=twg-foundry" -Headers @{Authorization="Bearer $mk"} -SkipHttpErrorCheck
+Remove-Variable mk
+$hb = $h.Content | ConvertFrom-Json
+"HTTP=$($h.StatusCode) healthy=$($hb.healthy_count) unhealthy=$($hb.unhealthy_count)"
+Remove-Variable h,hb
+```
+
+Expect `HTTP=200 healthy=1 unhealthy=0`. LiteLLM returns 200 even when the endpoint is unhealthy, so the counts are the check. Don't print the whole body: it carries endpoint details. If it isn't healthy, stop: fix the gateway identity's Foundry permissions or `foundry_scope_id` first.
+
+## 4. Create the ledger reader role (D-13)
+
+```powershell
+& .\scripts\Set-PopeyeLedgerReader.ps1 -KeyVaultName $kvn
+& .\scripts\Set-PopeyeLedgerReader.ps1 -KeyVaultName $kvn -VerifyOnly
+& .\scripts\Set-PopeyeLedgerReader.ps1 -KeyVaultName $kvn          # re-run: proves idempotence
+```
+
+This is the only step that needs `litellm-database-url`. To shorten that grant's window, remove it now. **Run this on the workstation, not the VM**: `$oid` and `$kv` are the workstation variables from step 1.
+
+```powershell
+# workstation
+az role assignment delete --assignee $oid --role "Key Vault Secrets User" --scope "$kv/secrets/litellm-database-url"
+```
+
+## 5. Smoke test: the MVP-01 row
+
+```powershell
+$t0 = (Get-Date).ToUniversalTime()
+$r = & .\scripts\Invoke-PopeyeSmoke.ps1 -Action Run -GatewayBaseUrl $gw -KeyVaultName $kvn -TenantId $tid -UserObjectId $oid
+```
+
+The script prints the timestamp, `RequestId`, HTTP 200, `twg-foundry` and the first 8 characters of the key hash. Record that line.
+
+## 6. Lockdown checks (GW-03)
+
+```powershell
+& .\scripts\Test-PopeyeGatewayLockdown.ps1 -GatewayBaseUrl $gw -UserKey $r.Key; $LASTEXITCODE   # expect 0
+```
+
+Every row should PASS, including the 200 positive control and the D-19 admin-UI rows.
+
+## 7. Confirm the row through the read-only path (MVP-01)
+
+```powershell
+$dsn = az keyvault secret show --vault-name $kvn --name litellm-reader-dsn --query value -o tsv
+& .\scripts\Test-PopeyeVerificationPsql.ps1 -Dsn $dsn -KeyHash $r.KeyHash -RequestId $r.RequestId `
+   -SinceUtc $t0.AddMinutes(-5) -ExpectedUserId $oid -ExpectedKeyAlias "user:$oid" -ExpectedTenantId $tid
+```
+
+Expect PASS: exactly one row, and team, user, key alias and tag all match. If the script prints an INFO line about `principal_type`, copy it into the evidence.
+
+Then check that the gateway priced the call. Step 8's budget probe can only reach 422 if spend is above zero:
+
+```powershell
+psql "--dbname=$dsn" --no-password --tuples-only --no-align --command "SELECT spend > 0 FROM public.""LiteLLM_SpendLogs"" WHERE request_id = '$($r.RequestId)';"
+```
+
+Expect `t`. If it prints `f`, LiteLLM can't price the Foundry deployment: the config has no `model_info`/`base_model`. Record a GW-06 gap for the budget probe and still run the rest of step 8. The fix is a config change after the ceremony, not during it.
+
+## 8. Shared budget counters and cross-replica proof (GW-06)
+
+1. Run the budget probe. It mints its own probe key, prints a histogram of status codes and blocks the key itself:
+
+   ```powershell
+   & .\scripts\Invoke-PopeyeSmoke.ps1 -Action BudgetProbe -GatewayBaseUrl $gw -KeyVaultName $kvn -TenantId $tid -UserObjectId $oid
+   ```
+
+2. List the replicas. There must be at least two:
+
+   ```powershell
+   az containerapp replica list -n popeye-stage1-stage2-eastus2-app -g rg-popeye-stage1-stage2-eastus2 --query "[].name" -o tsv
+   ```
+
+3. Take the "before" snapshot of Redis key names (names only, never values):
+
+   ```powershell
+   az containerapp exec -n popeye-stage1-stage2-eastus2-app -g rg-popeye-stage1-stage2-eastus2 --command sh
+   ```
+
+   Inside the replica, run:
+
+   ```sh
+   python -c "import os,redis,collections;c=redis.Redis(host=os.environ['REDIS_HOST'],port=int(os.environ.get('REDIS_PORT','10000')),password=os.environ.get('REDIS_PASSWORD'),ssl=True);print(collections.Counter(k.decode().split(':')[0] for k in c.scan_iter(count=500)))"
+   ```
+
+   Then type `exit`.
+
+4. Send 12 completions on one key. `$x.RequestIds` holds the 12 request IDs:
+
+   ```powershell
+   $x = & .\scripts\Invoke-PopeyeSmoke.ps1 -Action Run -Count 12 -GatewayBaseUrl $gw -KeyVaultName $kvn -TenantId $tid -UserObjectId $oid
+   ```
+
+5. Take the "after" snapshot by repeating point 3. Confirm the spend and budget counter key counts went up and no response-cache key prefixes exist.
+
+6. Work out which replica served each request. Run this from the VM or the portal; the operator workstation's TLS proxy breaks `az` log queries:
+
+   ```
+   ContainerAppConsoleLogs_CL | where ContainerGroupName_s == '<replica>' | where Log_s has '<request_id>'
+   ```
+
+   If that finds nothing, use the fallback in 0d.
+
+   First, settle 0d. Wait about 5 minutes for ingestion after step 8.4, then run this in the portal:
+
+   ```
+   ContainerAppConsoleLogs_CL
+   | where TimeGenerated > ago(30m)
+   | summarize total_lines = count(), completion_lines = countif(Log_s has "chat/completions") by ContainerGroupName_s
+   ```
+
+   - If `total_lines` is 0 for every replica, ingestion is lagging. Wait and run it again; an empty read is not a result.
+   - If `completion_lines` is 0 while `total_lines` is above 0, completions aren't logged at `LITELLM_LOG=ERROR`. Record a gap for per-replica attribution. The cross-replica evidence is then the step 8.2 replica count, the step 8.5 before and after Redis key-name counts, and a consistent 422 in the budget probe.
+   - If `completion_lines` is above 0, use the per-replica counts. Check whether the lines carry the request IDs from `$x.RequestIds`, and record which method you used.
+
+Record replica labels (replica-1, replica-2), the request count per replica, and the before and after key-name counts.
+
+## 9. Restart with no lost rows (GW-04)
+
+```powershell
+$rev = (az containerapp revision list -n popeye-stage1-stage2-eastus2-app -g rg-popeye-stage1-stage2-eastus2 -o json |
+  ConvertFrom-Json | Where-Object { $_.properties.active } | Select-Object -First 1).name
+$rev   # must not be empty
+$t9 = (Get-Date).ToUniversalTime()
+$f = & .\scripts\Invoke-PopeyeSmoke.ps1 -Action Run -Count 3 -GatewayBaseUrl $gw -KeyVaultName $kvn -TenantId $tid -UserObjectId $oid
+$tLast = (Get-Date).ToUniversalTime()
+az containerapp revision restart -n popeye-stage1-stage2-eastus2-app -g rg-popeye-stage1-stage2-eastus2 --revision $rev
+$tRestart = (Get-Date).ToUniversalTime()
+"restart accepted {0:N1} s after the last completion" -f ($tRestart - $tLast).TotalSeconds
+Start-Sleep 60
+& .\scripts\Test-PopeyeVerificationPsql.ps1 -Dsn $dsn -KeyHash $f.KeyHash -SinceUtc $t9.AddMinutes(-5) -ExpectedCount 3
+```
+
+Expect PASS with exactly 3 rows. The `--query` filter is done with `ConvertFrom-Json` because az.cmd on Windows mangles `?` and `|` in `--query`.
+
+Record the restart gap. LiteLLM writes spend rows in batches every 10 s, so if the restart was accepted more than about 10 s after the last completion, the rows were probably written before shutdown. In that case the 3-row PASS doesn't prove the shutdown flush: record GW-04 as **inconclusive**, not PASS.
+
+## 10. Cleanup: end of the privileged window, T1
+
+1. On the VM, block the smoke keys. They are blocked, never deleted (D-10). Then confirm each blocked key is refused:
+
+   ```powershell
+   foreach ($k in $r.Key,$x.Key,$f.Key) { & .\scripts\Invoke-PopeyeSmoke.ps1 -Action Block -Key $k -GatewayBaseUrl $gw -KeyVaultName $kvn }
+   & .\scripts\Test-PopeyeGatewayLockdown.ps1 -GatewayBaseUrl $gw -UserKey $r.Key   # positive control should now FAIL: the key is refused
+   Remove-Variable dsn,r,x,f -ErrorAction SilentlyContinue
+   Clear-History; Remove-Item (Get-PSReadLineOption).HistorySavePath -ErrorAction SilentlyContinue
+   az logout; az account clear   # signing out of Windows leaves the az token cache in the profile
+   az account show 2>$null; $LASTEXITCODE   # expect non-zero: no signed-in account
+   ```
+
+   The plan also asks for `/key/info` showing `blocked: true`. That requires sending the key in a URL, so the "refused" result above is the safer proof. If the `/key/info` line is wanted anyway, query it by key hash, never by the plain key.
+
+2. Sign out of Windows (**Start** → account → **Sign out**). Note the session end time.
+
+3. On the workstation, remove the grants and confirm they're gone:
+
+   ```powershell
+   foreach ($s in 'litellm-master-key','litellm-database-url','litellm-reader-dsn') {
+     az role assignment delete --assignee $oid --role "Key Vault Secrets User" --scope "$kv/secrets/$s"
+     az role assignment list --assignee $oid --scope "$kv/secrets/$s" -o tsv }     # each must be empty
+   (Get-Date).ToUniversalTime()   # T1
+   ```
+
+4. Record the Key Vault audit trail in the portal, with the query and row counts only. Logs can take 5–15 minutes to arrive, so wait before running this:
+
+   ```
+   AzureDiagnostics | where Category == "AuditEvent" and OperationName == "SecretGet"
+   | where TimeGenerated between (datetime(<T0>) .. datetime(<T1>)) | summarize count() by id_s
+   ```
+
+   Zero rows is not a clean result: the ceremony read secrets, so there must be SecretGet rows. If there are none, check the diagnostic setting from 0e and record a gap.
+
+   Keep `litellm-reader-dsn` readable afterwards if operators still need it, as procedure step 7 allows.
+
+## Results to hand back for the evidence file
+
+Bring back:
+
+- T0 and T1, and the Bastion session window;
+- the PASS or FAIL result of each step;
+- the request ID from step 5 and the first 8 characters of the key hash;
+- the step 3 healthy and unhealthy counts, and the step 7 spend check (`t` or `f`);
+- the budget-probe histogram;
+- the step 9 restart gap in seconds;
+- replica labels and per-replica counts, and the before and after Redis key-name counts;
+- the NET-04 rows and the method used in step 8.6.
+
+These feed `artifacts/popeye-mvp-smoke-evidence-2026-10-22.md` (01-08 Task 3) and the 01-08 summary. **Never record the master key, any smoke key, any DSN, prompt or response text, or any Entra object ID beyond its first 8 characters.**

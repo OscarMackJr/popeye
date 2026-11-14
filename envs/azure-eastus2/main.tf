@@ -282,13 +282,14 @@ module "state" {
 module "observability" {
   source = "../../modules/gateway-observability-azure"
 
-  name_prefix         = local.name_prefix
-  resource_group_name = azurerm_resource_group.gateway.name
-  location            = var.location
-  postgres_server_id  = module.state.postgres_server_id
-  container_app_id    = module.service.container_app_id
-  teams_webhook_url   = var.teams_webhook_url
-  tags                = local.tags
+  name_prefix          = local.name_prefix
+  resource_group_name  = azurerm_resource_group.gateway.name
+  location             = var.location
+  postgres_server_id   = module.state.postgres_server_id
+  container_app_id     = module.service.container_app_id
+  gateway_key_vault_id = azurerm_key_vault.gateway.id
+  teams_webhook_url    = var.teams_webhook_url
+  tags                 = local.tags
 }
 
 module "service" {
