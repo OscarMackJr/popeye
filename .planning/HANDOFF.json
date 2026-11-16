@@ -48,7 +48,12 @@
   "human_actions_pending": [
     {
       "action": "IT: Conditional Access exception for Azure CLI sign-in (app 04b07795-8ddb-461a-bbee-02f9e1bf7b46) from EUS-VM-POPEYE for omack@ and oboksner@",
-      "context": "2026-11-14 ceremony aborted at step 2: AADSTS53003 (request 8b60b5c8-17ad-44f0-945f-4b586fd55800, NAT IP 20.231.80.239); WAM Status_NoNetwork (possible port-80 CRL/OCSP block, networking). No secret read; grants removed.",
+      "context": "2026-11-14 ceremony aborted at step 2: AADSTS53003 (request 8b60b5c8-17ad-44f0-945f-4b586fd55800, NAT IP 20.231.80.239); WAM Status_NoNetwork (possible port-80 CRL/OCSP block, networking). No secret read; grants removed. Sent 2026-11-16; awaiting reply.",
+      "blocking": true
+    },
+    {
+      "action": "Networking: allow outbound TCP 80 (CRL/OCSP) from the VM subnet, optionally limited to Microsoft/DigiCert PKI hosts",
+      "context": "2026-11-16 probe: TCP 80 times out to crl.microsoft.com, ocsp.digicert.com and others; 443 OK; likely cause of WAM Status_NoNetwork. Sent 2026-11-16; awaiting reply.",
       "blocking": true
     },
     {
@@ -82,6 +87,6 @@
   "uncommitted_files": [
     "scripts/Test-PopeyeAzureVerificationVm.zip (untracked, intentionally not committed)"
   ],
-  "next_action": "Get IT's Conditional Access exception for Azure CLI on EUS-VM-POPEYE, then rerun the ceremony from runbook step 1 (/gsd-execute-phase 1, 01-08 Task 2). Re-check VM tooling first.",
+  "next_action": "Wait for IT (CA exception) and networking (TCP 80) replies. Then test az login + az account show in a Bastion session on EUS-VM-POPEYE, re-check VM tooling, and rerun the ceremony from runbook step 1 (/gsd-execute-phase 1, 01-08 Task 2).",
   "context_notes": "Work since 2026-10-23 ran as quick tasks 261027-j3d..261104-w3h (see STATE.md Quick Tasks and artifacts/popeye-phase1-preflight-2026-10-22.md). All pushed to origin/main; gateway re-pinned to LiteLLM v1.106.7 by PR #3 (b9be2ba). Postgres now resolves to 10.60.2.4 (was .5). Gateway FQDN popeye-stage1-stage2-eastus2-app.internal.ashyglacier-edb44cd7.eastus2.azurecontainerapps.io; env staticIp 10.60.0.108. VM RG EUS-RG-POPEYE-VM-01; VM 10.10.2.4 in EUS-POPEYE-VNET-01/EUS-POPEYE-VNET-02. Caller VNet EUS-POPEYE-VNET-01 is in RG EUS-RG-POPEYE-VNET-01 (VM subnet named EUS-POPEYE-VNET-02); pass operator UPNs to -ApprovedOperatorDisplayNames."
 }
