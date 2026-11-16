@@ -39,6 +39,19 @@ resource "azurerm_monitor_diagnostic_setting" "postgres" {
   }
 }
 
+# Gateway Key Vault audit trail (procedure step 7, plan 01-08 cleanup):
+# every SecretGet in a time-boxed grant window must be countable in the
+# workspace. Without this the ceremony's audit query reads nothing.
+resource "azurerm_monitor_diagnostic_setting" "gateway_key_vault" {
+  name                       = "${var.name_prefix}-kv-diag"
+  target_resource_id         = var.gateway_key_vault_id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.gateway.id
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+}
+
 # Notify channel: Teams via webhook (O365-native, roadmap 7.3).
 resource "azurerm_monitor_action_group" "notify" {
   count = var.teams_webhook_url == "" ? 0 : 1

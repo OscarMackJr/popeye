@@ -26,7 +26,7 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
   - Entra sign-in enabled.
 
   Evidence is recorded.
-- [ ] **NET-06**: VM login on `EUS-VM-POPEYE` is limited to the two approved operators with Virtual Machine User Login. Administrator Login is used only with written approval, and Oleg's access is granted (Oleg replaced Roger as the second operator, 2026-11-04).
+- [x] **NET-06**: VM login on `EUS-VM-POPEYE` is limited to the two approved operators with Virtual Machine User Login. Administrator Login is used only with written approval, and Oleg's access is granted (Oleg replaced Roger as the second operator, 2026-11-04).
 - [ ] **NET-07**: Temporary verification access is reviewed on an agreed date and removed or renewed with a record: login roles, temporary NSG rules, and the VM if it is dedicated to Popeye.
 
 ### Gateway Upgrade & Hardening (GW)
@@ -198,7 +198,7 @@ The design is peering: approved callers sit in the peered `EUS-POPEYE-VNET-01` (
 | NET-03 | Phase 1 | Pending (networking-owned zone; evidence in 01-09) |
 | NET-04 | Phase 1 | Complete |
 | NET-05 | Phase 1 | Complete |
-| NET-06 | Phase 1 | Pending (approved by Vinay 2026-11-04; networking RBAC change, then verify) |
+| NET-06 | Phase 1 | Complete (2026-11-11: control plane PASS; Bastion sign-in by both operators, non-admin) |
 | NET-07 | Phase 8 | Pending |
 | GW-01 | Phase 1 | Pending |
 | GW-02 | Phase 1 | Pending |
